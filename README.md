@@ -94,6 +94,9 @@ Available settings:
 | --- | --- | --- |
 | `MSSQL_SA_PASSWORD` | SQL Server system administrator password | Set in `.env` |
 | `SQLSERVER_PORT` | SQL Server port exposed on the host | `1433` |
+| `ConnectionStrings__DefaultConnection` | API connection to the local SQL Server database | Set in `.env` |
+
+The password in `ConnectionStrings__DefaultConnection` must match `MSSQL_SA_PASSWORD`.
 
 Start SQL Server and wait for it to become healthy:
 
@@ -102,14 +105,31 @@ docker compose up -d --wait
 docker compose ps
 ```
 
+Load the local configuration into the current shell before running database or API commands:
+
+```bash
+set -a
+. ./.env
+set +a
+```
+
 ### Backend
 
 Restore, build, and test the .NET solution:
 
 ```bash
+dotnet tool restore
 dotnet restore backend/PpecbAssessment.sln
 dotnet build backend/PpecbAssessment.sln --no-restore
 dotnet test backend/PpecbAssessment.sln --no-build
+```
+
+Apply the database migrations:
+
+```bash
+dotnet tool run dotnet-ef database update \
+  --project backend/src/PpecbAssessment.Infrastructure \
+  --startup-project backend/src/PpecbAssessment.Api
 ```
 
 Run the API:
