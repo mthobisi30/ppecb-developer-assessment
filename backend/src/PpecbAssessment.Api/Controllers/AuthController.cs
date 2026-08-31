@@ -10,6 +10,32 @@ namespace PpecbAssessment.Api.Controllers;
 public sealed class AuthController(IIdentityService identityService) : ControllerBase
 {
     [AllowAnonymous]
+    [HttpPost("login")]
+    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponse>> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await identityService.LoginAsync(
+            request.Email,
+            request.Password,
+            cancellationToken);
+
+        if (result.Succeeded)
+        {
+            return Ok(new LoginResponse(result.UserId!, result.Email!));
+        }
+
+        return Unauthorized(new ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = "Invalid email or password."
+        });
+    }
+
+    [AllowAnonymous]
     [HttpPost("register")]
     [ProducesResponseType<RegisterResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]

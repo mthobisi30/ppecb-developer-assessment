@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,63 @@ namespace PpecbAssessment.Tests.Infrastructure.Identity;
 
 public sealed class IdentityServiceTests
 {
+    [Fact]
+    public async Task LoginAsync_ValidCredentials_IssuesAuthenticationCookie()
+    {
+        using var provider = CreateServiceProvider();
+        using var scope = CreateScopeWithHttpContext(provider, out var httpContext);
+        var service = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+        await service.RegisterAsync("person@example.com", "ValidPassword1!");
+
+        var result = await service.LoginAsync(
+            "person@example.com",
+            "ValidPassword1!");
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(LoginFailureKind.None, result.Failure);
+        Assert.Equal("person@example.com", result.Email);
+        Assert.Contains(
+            httpContext.Response.Headers.SetCookie,
+            value => value!.Contains(IdentityConstants.ApplicationScheme, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task LoginAsync_InvalidPassword_ReturnsInvalidCredentials()
+    {
+        using var provider = CreateServiceProvider();
+        using var scope = CreateScopeWithHttpContext(provider, out var httpContext);
+        var service = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+        await service.RegisterAsync("person@example.com", "ValidPassword1!");
+
+        var result = await service.LoginAsync("person@example.com", "WrongPassword2!");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(LoginFailureKind.InvalidCredentials, result.Failure);
+        Assert.False(httpContext.Response.Headers.ContainsKey("Set-Cookie"));
+    }
+
+    [Fact]
+    public async Task LoginAsync_RepeatedInvalidPasswords_LocksOutUser()
+    {
+        using var provider = CreateServiceProvider();
+        using var scope = CreateScopeWithHttpContext(provider, out _);
+        var service = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+        await service.RegisterAsync("person@example.com", "ValidPassword1!");
+
+        UserLoginResult? result = null;
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            result = await service.LoginAsync(
+                "person@example.com",
+                "WrongPassword2!");
+        }
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+        Assert.Equal(LoginFailureKind.LockedOut, result.Failure);
+    }
+
     [Fact]
     public async Task RegisterAsync_ValidCredentials_CreatesNormalisedUser()
     {
@@ -68,6 +126,8 @@ public sealed class IdentityServiceTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddDataProtection();
+        services.AddHttpContextAccessor();
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services
@@ -80,10 +140,31 @@ public sealed class IdentityServiceTests
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = true;
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddSignInManager();
+        services
+            .AddAuthentication(IdentityConstants.ApplicationScheme)
+            .AddIdentityCookies();
         services.AddScoped<IIdentityService, IdentityService>();
 
         return services.BuildServiceProvider();
+    }
+
+    private static IServiceScope CreateScopeWithHttpContext(
+        ServiceProvider provider,
+        out DefaultHttpContext httpContext)
+    {
+        var scope = provider.CreateScope();
+        httpContext = new DefaultHttpContext
+        {
+            RequestServices = scope.ServiceProvider
+        };
+        scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext = httpContext;
+
+        return scope;
     }
 }

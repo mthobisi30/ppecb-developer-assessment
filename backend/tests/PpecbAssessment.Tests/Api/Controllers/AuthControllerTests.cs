@@ -9,6 +9,42 @@ namespace PpecbAssessment.Tests.Api.Controllers;
 public sealed class AuthControllerTests
 {
     [Fact]
+    public async Task Login_ValidCredentials_ReturnsAuthenticatedUser()
+    {
+        var loginResult = new UserLoginResult(
+            "user-id",
+            "person@example.com",
+            LoginFailureKind.None);
+        var controller = new AuthController(
+            new StubIdentityService(loginResult: loginResult));
+
+        var response = await controller.Login(CreateLoginRequest(), CancellationToken.None);
+
+        var okResult = Assert.IsType<OkObjectResult>(response.Result);
+        var body = Assert.IsType<LoginResponse>(okResult.Value);
+        Assert.Equal("user-id", body.UserId);
+        Assert.Equal("person@example.com", body.Email);
+    }
+
+    [Fact]
+    public async Task Login_InvalidCredentials_ReturnsUnauthorizedProblem()
+    {
+        var loginResult = new UserLoginResult(
+            null,
+            null,
+            LoginFailureKind.InvalidCredentials);
+        var controller = new AuthController(
+            new StubIdentityService(loginResult: loginResult));
+
+        var response = await controller.Login(CreateLoginRequest(), CancellationToken.None);
+
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(response.Result);
+        var problem = Assert.IsType<ProblemDetails>(unauthorizedResult.Value);
+        Assert.Equal(StatusCodes.Status401Unauthorized, problem.Status);
+        Assert.Equal("Invalid email or password.", problem.Title);
+    }
+
+    [Fact]
     public async Task Register_ValidCredentials_ReturnsRegisteredUser()
     {
         var result = new UserRegistrationResult(
@@ -16,7 +52,7 @@ public sealed class AuthControllerTests
             "person@example.com",
             RegistrationFailureKind.None,
             new Dictionary<string, string[]>());
-        var controller = new AuthController(new StubIdentityService(result));
+        var controller = new AuthController(new StubIdentityService(registrationResult: result));
 
         var response = await controller.Register(CreateRequest(), CancellationToken.None);
 
@@ -37,7 +73,7 @@ public sealed class AuthControllerTests
             {
                 ["Password"] = ["Password requirements were not met."]
             });
-        var controller = new AuthController(new StubIdentityService(result));
+        var controller = new AuthController(new StubIdentityService(registrationResult: result));
 
         var response = await controller.Register(CreateRequest(), CancellationToken.None);
 
@@ -58,7 +94,7 @@ public sealed class AuthControllerTests
             {
                 ["Email"] = ["An account with this email address already exists."]
             });
-        var controller = new AuthController(new StubIdentityService(result));
+        var controller = new AuthController(new StubIdentityService(registrationResult: result));
 
         var response = await controller.Register(CreateRequest(), CancellationToken.None);
 
@@ -77,14 +113,41 @@ public sealed class AuthControllerTests
         };
     }
 
-    private sealed class StubIdentityService(UserRegistrationResult result) : IIdentityService
+    private static LoginRequest CreateLoginRequest()
     {
+        return new LoginRequest
+        {
+            Email = "person@example.com",
+            Password = "ValidPassword1!"
+        };
+    }
+
+    private sealed class StubIdentityService(
+        UserRegistrationResult? registrationResult = null,
+        UserLoginResult? loginResult = null) : IIdentityService
+    {
+        public Task<UserLoginResult> LoginAsync(
+            string email,
+            string password,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(
+                loginResult
+                ?? new UserLoginResult(null, null, LoginFailureKind.InvalidCredentials));
+        }
+
         public Task<UserRegistrationResult> RegisterAsync(
             string email,
             string password,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(result);
+            return Task.FromResult(
+                registrationResult
+                ?? new UserRegistrationResult(
+                    null,
+                    null,
+                    RegistrationFailureKind.Validation,
+                    new Dictionary<string, string[]>()));
         }
     }
 }

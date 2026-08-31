@@ -3,10 +3,44 @@ using PpecbAssessment.Application.Authentication;
 
 namespace PpecbAssessment.Infrastructure.Identity;
 
-public sealed class IdentityService(UserManager<ApplicationUser> userManager) : IIdentityService
+public sealed class IdentityService(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager) : IIdentityService
 {
     private static readonly IReadOnlyDictionary<string, string[]> EmptyErrors =
         new Dictionary<string, string[]>();
+
+    public async Task<UserLoginResult> LoginAsync(
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var user = await userManager.FindByEmailAsync(email.Trim());
+
+        if (user is null)
+        {
+            return new UserLoginResult(null, null, LoginFailureKind.InvalidCredentials);
+        }
+
+        var signInResult = await signInManager.PasswordSignInAsync(
+            user,
+            password,
+            isPersistent: false,
+            lockoutOnFailure: true);
+
+        if (signInResult.Succeeded)
+        {
+            return new UserLoginResult(user.Id, user.Email, LoginFailureKind.None);
+        }
+
+        var failure = signInResult.IsLockedOut
+            ? LoginFailureKind.LockedOut
+            : LoginFailureKind.InvalidCredentials;
+
+        return new UserLoginResult(null, null, failure);
+    }
 
     public async Task<UserRegistrationResult> RegisterAsync(
         string email,

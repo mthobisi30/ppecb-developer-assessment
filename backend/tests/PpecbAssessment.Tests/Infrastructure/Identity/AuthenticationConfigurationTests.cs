@@ -25,6 +25,9 @@ public sealed class AuthenticationConfigurationTests
         Assert.True(options.Password.RequireLowercase);
         Assert.True(options.Password.RequireUppercase);
         Assert.True(options.Password.RequireNonAlphanumeric);
+        Assert.True(options.Lockout.AllowedForNewUsers);
+        Assert.Equal(5, options.Lockout.MaxFailedAccessAttempts);
+        Assert.Equal(TimeSpan.FromMinutes(15), options.Lockout.DefaultLockoutTimeSpan);
     }
 
     [Theory]
