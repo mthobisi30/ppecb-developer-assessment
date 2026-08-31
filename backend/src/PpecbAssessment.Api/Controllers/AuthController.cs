@@ -9,6 +9,16 @@ namespace PpecbAssessment.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(IIdentityService identityService) : ControllerBase
 {
+    [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        await identityService.LogoutAsync(cancellationToken);
+        return NoContent();
+    }
+
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]

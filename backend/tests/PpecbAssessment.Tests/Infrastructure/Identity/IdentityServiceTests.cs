@@ -68,6 +68,23 @@ public sealed class IdentityServiceTests
     }
 
     [Fact]
+    public async Task LogoutAsync_AuthenticatedUser_ExpiresAuthenticationCookie()
+    {
+        using var provider = CreateServiceProvider();
+        using var scope = CreateScopeWithHttpContext(provider, out var httpContext);
+        var service = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+        await service.RegisterAsync("person@example.com", "ValidPassword1!");
+        await service.LoginAsync("person@example.com", "ValidPassword1!");
+        httpContext.Response.Headers.Remove("Set-Cookie");
+
+        await service.LogoutAsync();
+
+        Assert.Contains(
+            httpContext.Response.Headers.SetCookie,
+            value => value!.Contains("expires=Thu, 01 Jan 1970", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task RegisterAsync_ValidCredentials_CreatesNormalisedUser()
     {
         using var provider = CreateServiceProvider();

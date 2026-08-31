@@ -7,6 +7,8 @@ public interface IIdentityService
         string password,
         CancellationToken cancellationToken = default);
 
+    Task LogoutAsync(CancellationToken cancellationToken = default);
+
     Task<UserRegistrationResult> RegisterAsync(
         string email,
         string password,

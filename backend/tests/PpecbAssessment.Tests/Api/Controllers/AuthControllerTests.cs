@@ -9,6 +9,18 @@ namespace PpecbAssessment.Tests.Api.Controllers;
 public sealed class AuthControllerTests
 {
     [Fact]
+    public async Task Logout_AuthenticatedUser_ReturnsNoContent()
+    {
+        var identityService = new StubIdentityService();
+        var controller = new AuthController(identityService);
+
+        var response = await controller.Logout(CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(response);
+        Assert.True(identityService.LogoutCalled);
+    }
+
+    [Fact]
     public async Task Login_ValidCredentials_ReturnsAuthenticatedUser()
     {
         var loginResult = new UserLoginResult(
@@ -126,6 +138,8 @@ public sealed class AuthControllerTests
         UserRegistrationResult? registrationResult = null,
         UserLoginResult? loginResult = null) : IIdentityService
     {
+        public bool LogoutCalled { get; private set; }
+
         public Task<UserLoginResult> LoginAsync(
             string email,
             string password,
@@ -148,6 +162,12 @@ public sealed class AuthControllerTests
                     null,
                     RegistrationFailureKind.Validation,
                     new Dictionary<string, string[]>()));
+        }
+
+        public Task LogoutAsync(CancellationToken cancellationToken = default)
+        {
+            LogoutCalled = true;
+            return Task.CompletedTask;
         }
     }
 }

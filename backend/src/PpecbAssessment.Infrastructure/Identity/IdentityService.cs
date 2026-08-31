@@ -42,6 +42,12 @@ public sealed class IdentityService(
         return new UserLoginResult(null, null, failure);
     }
 
+    public async Task LogoutAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await signInManager.SignOutAsync();
+    }
+
     public async Task<UserRegistrationResult> RegisterAsync(
         string email,
         string password,
