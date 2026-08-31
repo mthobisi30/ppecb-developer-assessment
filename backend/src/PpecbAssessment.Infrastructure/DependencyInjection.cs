@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PpecbAssessment.Application.Authentication;
+using PpecbAssessment.Application.Common.Interfaces;
 using PpecbAssessment.Infrastructure.Identity;
 using PpecbAssessment.Infrastructure.Persistence;
 
@@ -74,6 +75,8 @@ public static class DependencyInjection
         });
 
         services.AddAuthorization();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IIdentityService, IdentityService>();
 
         return services;
