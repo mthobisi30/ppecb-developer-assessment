@@ -7,9 +7,11 @@ using Microsoft.Extensions.DependencyInjection;
 using PpecbAssessment.Application.Authentication;
 using PpecbAssessment.Application.Categories;
 using PpecbAssessment.Application.Common.Interfaces;
+using PpecbAssessment.Application.Products;
 using PpecbAssessment.Infrastructure.Categories;
 using PpecbAssessment.Infrastructure.Identity;
 using PpecbAssessment.Infrastructure.Persistence;
+using PpecbAssessment.Infrastructure.Products;
 
 namespace PpecbAssessment.Infrastructure;
 
@@ -82,6 +84,8 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IProductCodeGenerator, ProductCodeGenerator>();
+        services.AddScoped<IProductCodeSequenceStore, SqlProductCodeSequenceStore>();
 
         return services;
     }
