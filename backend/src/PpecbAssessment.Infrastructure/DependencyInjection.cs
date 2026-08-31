@@ -89,6 +89,7 @@ public static class DependencyInjection
         services.AddScoped<IProductImageService, ProductImageService>();
         services.AddScoped<IProductImageStorage, LocalProductImageStorage>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductSpreadsheetService, ProductSpreadsheetService>();
 
         return services;
     }
