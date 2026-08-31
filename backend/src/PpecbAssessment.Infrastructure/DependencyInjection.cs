@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PpecbAssessment.Application.Authentication;
 using PpecbAssessment.Infrastructure.Identity;
 using PpecbAssessment.Infrastructure.Persistence;
 
@@ -70,6 +71,7 @@ public static class DependencyInjection
         });
 
         services.AddAuthorization();
+        services.AddScoped<IIdentityService, IdentityService>();
 
         return services;
     }
