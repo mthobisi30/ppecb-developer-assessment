@@ -10,7 +10,8 @@ public sealed class ProductService(
     ApplicationDbContext dbContext,
     ICurrentUser currentUser,
     IProductCodeGenerator productCodeGenerator,
-    TimeProvider timeProvider) : IProductService
+    TimeProvider timeProvider,
+    IProductImageStorage? productImageStorage = null) : IProductService
 {
     public async Task<ProductPage> GetPageAsync(
         int page,
@@ -200,6 +201,11 @@ public sealed class ProductService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            if (productImageStorage is not null)
+            {
+                await productImageStorage.TryDeleteAsync(product.ImagePath, cancellationToken);
+            }
+
             return new ProductDeleteResult(ProductFailureKind.None, product.ImagePath);
         }
         catch (DbUpdateConcurrencyException)

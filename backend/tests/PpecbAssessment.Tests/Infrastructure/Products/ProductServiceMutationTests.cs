@@ -115,15 +115,18 @@ public sealed class ProductServiceMutationTests
         product.ImagePath = "uploads/products/image.jpg";
         dbContext.Products.Add(product);
         await dbContext.SaveChangesAsync();
+        var imageStorage = new StubImageStorage();
         var service = CreateService(
             dbContext,
             "owner-one",
-            new StubProductCodeGenerator("202608-002"));
+            new StubProductCodeGenerator("202608-002"),
+            imageStorage);
 
         var result = await service.DeleteAsync(1);
 
         Assert.True(result.Succeeded);
         Assert.Equal("uploads/products/image.jpg", result.DeletedImagePath);
+        Assert.Equal("uploads/products/image.jpg", imageStorage.DeletedImagePath);
         Assert.Empty(dbContext.Products);
     }
 
@@ -139,13 +142,15 @@ public sealed class ProductServiceMutationTests
     private static ProductService CreateService(
         ApplicationDbContext dbContext,
         string userId,
-        IProductCodeGenerator productCodeGenerator)
+        IProductCodeGenerator productCodeGenerator,
+        IProductImageStorage? imageStorage = null)
     {
         return new ProductService(
             dbContext,
             new StubCurrentUser(userId),
             productCodeGenerator,
-            new FixedTimeProvider(FixedUtcNow));
+            new FixedTimeProvider(FixedUtcNow),
+            imageStorage);
     }
 
     private static Category CreateCategory(int categoryId, string ownerUserId, bool isActive)
@@ -196,6 +201,27 @@ public sealed class ProductServiceMutationTests
         {
             Called = true;
             return Task.FromResult(new ProductCodeGenerationResult(productCode));
+        }
+    }
+
+    private sealed class StubImageStorage : IProductImageStorage
+    {
+        public string? DeletedImagePath { get; private set; }
+
+        public Task<string> SaveAsync(
+            Stream content,
+            string fileExtension,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task TryDeleteAsync(
+            string? imagePath,
+            CancellationToken cancellationToken = default)
+        {
+            DeletedImagePath = imagePath;
+            return Task.CompletedTask;
         }
     }
 
