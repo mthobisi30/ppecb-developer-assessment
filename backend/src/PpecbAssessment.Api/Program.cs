@@ -1,13 +1,24 @@
+using PpecbAssessment.Api.Configuration;
 using PpecbAssessment.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddApiServices(
+    requireSecureCookies: !builder.Environment.IsDevelopment());
 builder.Services.AddInfrastructure(
     builder.Configuration,
     requireSecureCookies: !builder.Environment.IsDevelopment());
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

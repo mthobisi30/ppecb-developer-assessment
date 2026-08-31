@@ -1,0 +1,3 @@
+namespace PpecbAssessment.Api.Contracts.Authentication;
+
+public sealed record CsrfTokenResponse(string Token);
