@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using PpecbAssessment.Api.Security;
 
 namespace PpecbAssessment.Api.Configuration;
 
@@ -11,8 +9,9 @@ public static class ApiServiceCollectionExtensions
         this IServiceCollection services,
         bool requireSecureCookies)
     {
+        services.AddScoped<AntiforgeryValidationFilter>();
         services.AddControllers(options =>
-            options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+            options.Filters.AddService<AntiforgeryValidationFilter>());
         services.AddProblemDetails();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
