@@ -86,6 +86,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IProductCodeGenerator, ProductCodeGenerator>();
         services.AddScoped<IProductCodeSequenceStore, SqlProductCodeSequenceStore>();
+        services.AddScoped<IProductService, ProductService>();
 
         return services;
     }
