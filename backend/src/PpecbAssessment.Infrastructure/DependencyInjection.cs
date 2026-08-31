@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PpecbAssessment.Application.Authentication;
+using PpecbAssessment.Application.Categories;
 using PpecbAssessment.Application.Common.Interfaces;
+using PpecbAssessment.Infrastructure.Categories;
 using PpecbAssessment.Infrastructure.Identity;
 using PpecbAssessment.Infrastructure.Persistence;
 
@@ -76,7 +78,9 @@ public static class DependencyInjection
 
         services.AddAuthorization();
         services.AddHttpContextAccessor();
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IIdentityService, IdentityService>();
 
         return services;
