@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PpecbAssessment.Application.Common.Interfaces;
+using PpecbAssessment.Application.Products;
 using PpecbAssessment.Domain.Entities;
 using PpecbAssessment.Infrastructure.Persistence;
 using PpecbAssessment.Infrastructure.Products;
@@ -19,7 +20,7 @@ public sealed class ProductServiceQueryTests
                 .Select(index => CreateProduct(index, $"Product {index:D2}", ownedCategory)));
         dbContext.Products.Add(CreateProduct(20, "Other owner's product", otherCategory));
         await dbContext.SaveChangesAsync();
-        var service = new ProductService(dbContext, new StubCurrentUser("owner-one"));
+        var service = CreateService(dbContext, "owner-one");
 
         var result = await service.GetPageAsync(2, 10);
 
@@ -36,7 +37,7 @@ public sealed class ProductServiceQueryTests
         var category = CreateCategory(1, "owner-one", "Fruit");
         dbContext.Products.Add(CreateProduct(1, "Apples", category));
         await dbContext.SaveChangesAsync();
-        var service = new ProductService(dbContext, new StubCurrentUser("owner-one"));
+        var service = CreateService(dbContext, "owner-one");
 
         var result = await service.GetByIdAsync(1);
 
@@ -52,7 +53,7 @@ public sealed class ProductServiceQueryTests
         var category = CreateCategory(1, "owner-two", "Fruit");
         dbContext.Products.Add(CreateProduct(1, "Apples", category));
         await dbContext.SaveChangesAsync();
-        var service = new ProductService(dbContext, new StubCurrentUser("owner-one"));
+        var service = CreateService(dbContext, "owner-one");
 
         var result = await service.GetByIdAsync(1);
 
@@ -66,6 +67,17 @@ public sealed class ProductServiceQueryTests
             .Options;
 
         return new ApplicationDbContext(options);
+    }
+
+    private static ProductService CreateService(
+        ApplicationDbContext dbContext,
+        string userId)
+    {
+        return new ProductService(
+            dbContext,
+            new StubCurrentUser(userId),
+            new StubProductCodeGenerator(),
+            TimeProvider.System);
     }
 
     private static Category CreateCategory(int categoryId, string ownerUserId, string name)
@@ -103,5 +115,14 @@ public sealed class ProductServiceQueryTests
         string? ICurrentUser.UserId => UserId;
 
         public string? Email => "person@example.com";
+    }
+
+    private sealed class StubProductCodeGenerator : IProductCodeGenerator
+    {
+        public Task<ProductCodeGenerationResult> GenerateAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new ProductCodeGenerationResult("202608-999"));
+        }
     }
 }

@@ -71,5 +71,37 @@ public sealed class ProductsControllerQueryTests
         {
             return Task.FromResult(product);
         }
+
+        public Task<ProductWriteResult> CreateAsync(
+            string name,
+            string? description,
+            decimal price,
+            int categoryId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(
+                new ProductWriteResult(product, ProductFailureKind.None));
+        }
+
+        public Task<ProductWriteResult> UpdateAsync(
+            int productId,
+            string name,
+            string? description,
+            decimal price,
+            int categoryId,
+            byte[] expectedRowVersion,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(
+                new ProductWriteResult(product, ProductFailureKind.None));
+        }
+
+        public Task<ProductDeleteResult> DeleteAsync(
+            int productId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(
+                new ProductDeleteResult(ProductFailureKind.None, null));
+        }
     }
 }
