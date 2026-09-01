@@ -19,7 +19,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -358,7 +360,156 @@ button:disabled {
 }
 
 .catalog-heading {
+  display: flex;
   margin-bottom: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.catalog-add-button {
+  flex: 0 0 auto;
+}
+
+.catalog-alert {
+  margin-bottom: 1.5rem;
+}
+
+.product-form-panel {
+  margin-bottom: 2rem;
+  padding: 1.75rem;
+  border: 1px solid #dedede;
+  background: #fff;
+}
+
+.product-form-heading {
+  display: flex;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.product-form-heading h2,
+.product-form-heading p {
+  margin: 0;
+}
+
+.product-form-heading h2 {
+  color: #333;
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.product-form-heading p {
+  margin-top: 0.35rem;
+  color: #666;
+}
+
+.product-form-panel form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.product-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.catalog-field {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.catalog-field label {
+  color: #222;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.catalog-field input,
+.catalog-field select,
+.catalog-field textarea {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #ccc;
+  color: #333;
+  background: #fff;
+  outline: none;
+}
+
+.catalog-field textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.catalog-field input:focus,
+.catalog-field select:focus,
+.catalog-field textarea:focus {
+  border-color: #087f9b;
+  box-shadow: 0 0 0 2px rgb(8 127 155 / 20%);
+}
+
+.catalog-field input[aria-invalid="true"],
+.catalog-field select[aria-invalid="true"],
+.catalog-field textarea[aria-invalid="true"] {
+  border-color: #b23a32;
+}
+
+.description-field {
+  grid-column: 1 / -1;
+}
+
+.price-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+}
+
+.price-input:focus-within {
+  border-color: #087f9b;
+  box-shadow: 0 0 0 2px rgb(8 127 155 / 20%);
+}
+
+.price-input > span {
+  padding-left: 0.9rem;
+  color: #555;
+}
+
+.price-input input {
+  border: 0;
+  box-shadow: none;
+}
+
+.price-input input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.price-input:has(input[aria-invalid="true"]) {
+  border-color: #b23a32;
+}
+
+.product-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.product-form-actions .button {
+  min-width: 9rem;
+}
+
+.product-form-panel .category-load-error {
+  display: flex;
+  max-width: none;
+  margin-bottom: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .catalog-state {
@@ -561,6 +712,36 @@ button:disabled {
 
   .catalog-heading h1 {
     font-size: 1.9rem;
+  }
+
+  .catalog-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .catalog-add-button {
+    width: 100%;
+  }
+
+  .product-form-panel {
+    padding: 1.25rem;
+  }
+
+  .product-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .description-field {
+    grid-column: auto;
+  }
+
+  .product-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .product-form-actions .button {
+    width: 100%;
   }
 
   .catalog-state {

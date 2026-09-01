@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useState } from 'react'
 import { getProductPage } from './catalogApi.ts'
+import { ProductForm } from './ProductForm.tsx'
 import {
   catalogReducer,
   formatProductPrice,
@@ -12,6 +13,8 @@ import type { Product, ProductPage } from './catalogTypes.ts'
 export function CatalogPage() {
   const [state, dispatch] = useReducer(catalogReducer, initialCatalogState)
   const [requestVersion, setRequestVersion] = useState(0)
+  const [isAddingProduct, setIsAddingProduct] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -42,12 +45,45 @@ export function CatalogPage() {
     setRequestVersion((version) => version + 1)
   }
 
+  function handleProductCreated(product: Product) {
+    setIsAddingProduct(false)
+    setSuccessMessage(`${product.name} was added to the catalogue.`)
+    dispatch({ type: 'pageRequested', page: 1 })
+    setRequestVersion((version) => version + 1)
+  }
+
   return (
     <section className="catalog-page" aria-labelledby="catalog-title">
       <div className="catalog-heading">
-        <h1 id="catalog-title">Product catalogue</h1>
-        <p>View the products registered in the catalogue.</p>
+        <div>
+          <h1 id="catalog-title">Product catalogue</h1>
+          <p>View the products registered in the catalogue.</p>
+        </div>
+        {!isAddingProduct && (
+          <button
+            className="button button-primary catalog-add-button"
+            onClick={() => {
+              setIsAddingProduct(true)
+              setSuccessMessage(null)
+            }}
+            type="button"
+          >
+            Add product
+          </button>
+        )}
       </div>
+
+      {successMessage !== null && (
+        <p className="alert alert-success catalog-alert" role="status">
+          {successMessage}
+        </p>
+      )}
+      {isAddingProduct && (
+        <ProductForm
+          onCancel={() => setIsAddingProduct(false)}
+          onCreated={handleProductCreated}
+        />
+      )}
 
       {state.status === 'loading' && <CatalogLoading />}
       {state.status === 'error' && (

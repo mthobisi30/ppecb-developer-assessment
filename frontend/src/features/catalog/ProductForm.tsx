@@ -1,0 +1,255 @@
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { createProduct, getCategories } from './catalogApi.ts'
+import {
+  getProductFormFailure,
+  toCreateProductInput,
+  validateProductForm,
+} from './productForm.ts'
+import type { ProductFieldErrors, ProductFormValues } from './productForm.ts'
+import type { Category, Product } from './catalogTypes.ts'
+
+interface ProductFormProps {
+  onCancel: () => void
+  onCreated: (product: Product) => void
+}
+
+const initialValues: ProductFormValues = {
+  name: '',
+  description: '',
+  price: '',
+  categoryId: '',
+}
+
+export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
+  const [values, setValues] = useState(initialValues)
+  const [fieldErrors, setFieldErrors] = useState<ProductFieldErrors>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [categories, setCategories] = useState<Category[] | null>(null)
+  const [categoryError, setCategoryError] = useState<string | null>(null)
+  const [categoryRequestVersion, setCategoryRequestVersion] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    void getCategories(controller.signal)
+      .then((result) => {
+        setCategories(result.filter((category) => category.isActive))
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setCategoryError('Categories could not be loaded. Please try again.')
+        }
+      })
+
+    return () => controller.abort()
+  }, [categoryRequestVersion])
+
+  function retryCategories() {
+    setCategories(null)
+    setCategoryError(null)
+    setCategoryRequestVersion((version) => version + 1)
+  }
+
+  function updateValue(field: keyof ProductFormValues, value: string) {
+    setValues((current) => ({ ...current, [field]: value }))
+    setFieldErrors((current) => ({ ...current, [field]: undefined }))
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const normalizedValues = {
+      ...values,
+      name: values.name.trim(),
+      description: values.description.trim(),
+    }
+    const errors = validateProductForm(normalizedValues)
+
+    setFieldErrors(errors)
+    setFormError(null)
+
+    if (Object.keys(errors).length > 0) {
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const product = await createProduct(toCreateProductInput(normalizedValues))
+      onCreated(product)
+    } catch (error) {
+      const failure = getProductFormFailure(error)
+      setFieldErrors(failure.fieldErrors)
+      setFormError(failure.formError)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const hasCategories = categories !== null && categories.length > 0
+
+  return (
+    <section className="product-form-panel" aria-labelledby="product-form-title">
+      <div className="product-form-heading">
+        <div>
+          <h2 id="product-form-title">Add product</h2>
+          <p>Enter the product details below.</p>
+        </div>
+        <button
+          className="text-button"
+          disabled={isSubmitting}
+          onClick={onCancel}
+          type="button"
+        >
+          Close
+        </button>
+      </div>
+
+      <form onSubmit={(event) => void handleSubmit(event)} noValidate>
+        {formError !== null && (
+          <p className="alert alert-error" role="alert">{formError}</p>
+        )}
+        {categoryError !== null && (
+          <div className="alert alert-error category-load-error" role="alert">
+            <span>{categoryError}</span>
+            <button
+              className="text-button"
+              onClick={retryCategories}
+              type="button"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        <div className="product-form-grid">
+          <FormField error={fieldErrors.name} id="product-name" label="Name">
+            <input
+              aria-describedby={fieldErrors.name === undefined ? undefined : 'product-name-error'}
+              aria-invalid={fieldErrors.name !== undefined}
+              autoFocus
+              id="product-name"
+              maxLength={200}
+              onChange={(event) => updateValue('name', event.target.value)}
+              placeholder="Enter product name"
+              type="text"
+              value={values.name}
+            />
+          </FormField>
+
+          <FormField error={fieldErrors.categoryId} id="product-category" label="Category">
+            <select
+              aria-describedby={fieldErrors.categoryId === undefined
+                ? undefined
+                : 'product-category-error'}
+              aria-invalid={fieldErrors.categoryId !== undefined}
+              disabled={categories === null || categoryError !== null}
+              id="product-category"
+              onChange={(event) => updateValue('categoryId', event.target.value)}
+              value={values.categoryId}
+            >
+              <option value="">
+                {categoryError !== null
+                  ? 'Categories unavailable'
+                  : categories === null
+                    ? 'Loading categories...'
+                    : 'Select category'}
+              </option>
+              {categories?.map((category) => (
+                <option key={category.categoryId} value={category.categoryId}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            {categories?.length === 0 && (
+              <span className="field-help">No active categories are available.</span>
+            )}
+          </FormField>
+
+          <FormField error={fieldErrors.price} id="product-price" label="Price">
+            <div className="price-input">
+              <span aria-hidden="true">R</span>
+              <input
+                aria-describedby={fieldErrors.price === undefined ? undefined : 'product-price-error'}
+                aria-invalid={fieldErrors.price !== undefined}
+                id="product-price"
+                inputMode="decimal"
+                min="0"
+                onChange={(event) => updateValue('price', event.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
+                value={values.price}
+              />
+            </div>
+          </FormField>
+
+          <FormField
+            className="description-field"
+            error={fieldErrors.description}
+            id="product-description"
+            label="Description (optional)"
+          >
+            <textarea
+              aria-describedby={fieldErrors.description === undefined
+                ? undefined
+                : 'product-description-error'}
+              aria-invalid={fieldErrors.description !== undefined}
+              id="product-description"
+              maxLength={2000}
+              onChange={(event) => updateValue('description', event.target.value)}
+              placeholder="Enter a short description"
+              rows={4}
+              value={values.description}
+            />
+          </FormField>
+        </div>
+
+        <div className="product-form-actions">
+          <button
+            className="button button-secondary"
+            disabled={isSubmitting}
+            onClick={onCancel}
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            className="button button-primary"
+            disabled={isSubmitting || !hasCategories}
+            type="submit"
+          >
+            {isSubmitting ? 'Adding product...' : 'Add product'}
+          </button>
+        </div>
+      </form>
+    </section>
+  )
+}
+
+interface FormFieldProps {
+  children: React.ReactNode
+  className?: string
+  error?: string
+  id: string
+  label: string
+}
+
+function FormField({
+  children,
+  className = '',
+  error,
+  id,
+  label,
+}: FormFieldProps) {
+  return (
+    <div className={`catalog-field ${className}`}>
+      <label htmlFor={id}>{label}</label>
+      {children}
+      {error !== undefined && (
+        <span className="field-error" id={`${id}-error`}>{error}</span>
+      )}
+    </div>
+  )
+}
