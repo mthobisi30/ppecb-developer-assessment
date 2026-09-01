@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { resetCsrfToken } from '../../api/index.ts'
-import { getCategories, getProductPage } from './catalogApi.ts'
+import {
+  createProduct,
+  getCategories,
+  getProductPage,
+} from './catalogApi.ts'
 
 interface FetchCall {
   input: RequestInfo | URL
@@ -82,6 +86,47 @@ test('getCategories returns category records', async () => {
   assert.equal(calls[0].input, '/api/categories')
   assert.equal(categories[0].categoryCode, 'FRT001')
   assert.equal(categories[0].isActive, true)
+})
+
+test('createProduct submits product details and returns the created product', async () => {
+  const calls = installFetchResponses(
+    jsonResponse({ token: 'csrf-token' }),
+    jsonResponse({
+      productId: 12,
+      productCode: 'PROD-202609-001',
+      name: 'Apples',
+      description: 'Fresh apples',
+      price: 29.95,
+      categoryId: 4,
+      categoryName: 'Fruit',
+      imagePath: null,
+      rowVersion: 'AQIDBA==',
+    }, 201),
+  )
+  const controller = new AbortController()
+
+  const product = await createProduct({
+    name: 'Apples',
+    description: 'Fresh apples',
+    price: 29.95,
+    categoryId: 4,
+  }, controller.signal)
+
+  assert.equal(calls[1].input, '/api/products')
+  assert.equal(calls[1].init.method, 'POST')
+  assert.equal(calls[1].init.signal, controller.signal)
+  assert.equal(
+    new Headers(calls[1].init.headers).get('X-CSRF-TOKEN'),
+    'csrf-token',
+  )
+  assert.deepEqual(JSON.parse(calls[1].init.body as string), {
+    name: 'Apples',
+    description: 'Fresh apples',
+    price: 29.95,
+    categoryId: 4,
+  })
+  assert.equal(product.productCode, 'PROD-202609-001')
+  assert.equal(product.categoryName, 'Fruit')
 })
 
 function installFetchResponses(...responses: Response[]): FetchCall[] {

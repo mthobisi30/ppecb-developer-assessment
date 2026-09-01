@@ -1,5 +1,10 @@
 import { apiRequest } from '../../api/index.ts'
-import type { Category, ProductPage } from './catalogTypes.ts'
+import type {
+  Category,
+  CreateProductInput,
+  Product,
+  ProductPage,
+} from './catalogTypes.ts'
 
 export interface ProductPageOptions {
   page?: number
@@ -20,4 +25,15 @@ export function getProductPage({
 
 export function getCategories(signal?: AbortSignal): Promise<Category[]> {
   return apiRequest<Category[]>('/categories', { signal })
+}
+
+export function createProduct(
+  input: CreateProductInput,
+  signal?: AbortSignal,
+): Promise<Product> {
+  return apiRequest<Product>('/products', {
+    method: 'POST',
+    json: input,
+    signal,
+  })
 }

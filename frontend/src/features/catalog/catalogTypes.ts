@@ -14,6 +14,13 @@ export interface Product {
 
 export type ProductPage = PagedResponse<Product>
 
+export interface CreateProductInput {
+  name: string
+  description: string | null
+  price: number
+  categoryId: number
+}
+
 export interface Category {
   categoryId: number
   name: string
