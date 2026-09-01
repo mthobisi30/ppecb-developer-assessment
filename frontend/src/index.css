@@ -197,6 +197,7 @@ button:disabled {
 
 .button-primary:focus-visible,
 .button-secondary:focus-visible,
+.button-danger:focus-visible,
 .checkbox-field input:focus-visible {
   outline: 3px solid rgb(2 78 96 / 35%);
   outline-offset: 3px;
@@ -212,6 +213,17 @@ button:disabled {
 
 .button-secondary:not(:disabled):hover {
   background: #eef6f8;
+}
+
+.button-danger {
+  min-height: 2.75rem;
+  color: #fff;
+  background: #a32f29;
+  text-transform: none;
+}
+
+.button-danger:not(:disabled):hover {
+  background: #872620;
 }
 
 .alert {
@@ -375,14 +387,16 @@ button:disabled {
   margin-bottom: 1.5rem;
 }
 
-.product-form-panel {
+.product-form-panel,
+.management-panel {
   margin-bottom: 2rem;
   padding: 1.75rem;
   border: 1px solid #dedede;
   background: #fff;
 }
 
-.product-form-heading {
+.product-form-heading,
+.management-heading {
   display: flex;
   margin-bottom: 1.5rem;
   align-items: flex-start;
@@ -391,17 +405,21 @@ button:disabled {
 }
 
 .product-form-heading h2,
-.product-form-heading p {
+.product-form-heading p,
+.management-heading h2,
+.management-heading p {
   margin: 0;
 }
 
-.product-form-heading h2 {
+.product-form-heading h2,
+.management-heading h2 {
   color: #333;
   font-size: 1.4rem;
   font-weight: 500;
 }
 
-.product-form-heading p {
+.product-form-heading p,
+.management-heading p {
   margin-top: 0.35rem;
   color: #666;
 }
@@ -409,6 +427,72 @@ button:disabled {
 .product-form-panel form {
   display: grid;
   gap: 1.25rem;
+}
+
+.management-panel .alert {
+  max-width: none;
+}
+
+.delete-panel > p {
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.image-upload-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.image-upload-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.image-preview {
+  width: 10rem;
+  height: 10rem;
+  flex: 0 0 auto;
+  border: 1px solid #dedede;
+  object-fit: cover;
+}
+
+.image-preview-placeholder {
+  display: grid;
+  place-items: center;
+  color: #176b7e;
+  background: #eef6f8;
+  font-size: 2.25rem;
+  font-weight: 600;
+}
+
+.image-file-field {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.image-file-field > label {
+  color: #222;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.image-file-field input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+.image-file-field input:focus-visible {
+  outline: 3px solid rgb(2 78 96 / 35%);
+  outline-offset: 2px;
+}
+
+.selected-file {
+  color: #215f37;
+  font-size: 0.85rem;
 }
 
 .product-form-grid {
@@ -626,6 +710,42 @@ button:disabled {
   white-space: nowrap;
 }
 
+.actions-column {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.row-action-button {
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  color: #176b7e;
+  background: transparent;
+  font-size: 0.85rem;
+}
+
+.row-action-button:hover {
+  background: #eef6f8;
+}
+
+.row-action-button:focus-visible {
+  outline: 2px solid #087f9b;
+  outline-offset: 1px;
+}
+
+.row-action-danger {
+  color: #a32f29;
+}
+
+.row-action-danger:hover {
+  background: #fff1f0;
+}
+
 .catalog-pagination {
   display: flex;
   min-height: 4.5rem;
@@ -724,7 +844,8 @@ button:disabled {
     width: 100%;
   }
 
-  .product-form-panel {
+  .product-form-panel,
+  .management-panel {
     padding: 1.25rem;
   }
 
@@ -744,13 +865,28 @@ button:disabled {
     width: 100%;
   }
 
+  .image-upload-content {
+    flex-direction: column;
+  }
+
+  .image-preview {
+    width: 100%;
+    height: auto;
+    max-width: 14rem;
+    aspect-ratio: 1;
+  }
+
+  .image-file-field {
+    width: 100%;
+  }
+
   .catalog-state {
     min-height: 15rem;
     padding: 2rem 1.25rem;
   }
 
   .product-table {
-    min-width: 43rem;
+    min-width: 57rem;
   }
 
   .catalog-pagination,

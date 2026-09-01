@@ -75,3 +75,10 @@ export function getProductRangeLabel(data: ProductPage): string {
   const last = first + data.items.length - 1
   return `${first}–${last} of ${data.totalCount} products`
 }
+
+export function getPageAfterProductDelete(
+  page: number,
+  itemCount: number,
+): number {
+  return itemCount === 1 && page > 1 ? page - 1 : page
+}

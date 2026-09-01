@@ -3,8 +3,10 @@ import test from 'node:test'
 import { resetCsrfToken } from '../../api/index.ts'
 import {
   createProduct,
+  deleteProduct,
   getCategories,
   getProductPage,
+  updateProduct,
   uploadProductImage,
 } from './catalogApi.ts'
 
@@ -175,6 +177,63 @@ test('uploadProductImage rejects invalid product identifiers before requesting',
     () => uploadProductImage(0, file),
     (error: unknown) => error instanceof RangeError
       && error.message === 'Product ID must be a positive integer.',
+  )
+})
+
+test('updateProduct submits the concurrency version and returns the updated product', async () => {
+  const calls = installFetchResponses(
+    jsonResponse({ token: 'csrf-token' }),
+    jsonResponse({
+      productId: 12,
+      productCode: 'PROD-202609-001',
+      name: 'Green apples',
+      description: null,
+      price: 34.5,
+      categoryId: 4,
+      categoryName: 'Fruit',
+      imagePath: null,
+      rowVersion: 'BQYHCA==',
+    }),
+  )
+  const controller = new AbortController()
+
+  const product = await updateProduct(12, {
+    name: 'Green apples',
+    description: null,
+    price: 34.5,
+    categoryId: 4,
+    rowVersion: 'AQIDBA==',
+  }, controller.signal)
+
+  assert.equal(calls[1].input, '/api/products/12')
+  assert.equal(calls[1].init.method, 'PUT')
+  assert.equal(calls[1].init.signal, controller.signal)
+  assert.deepEqual(JSON.parse(calls[1].init.body as string), {
+    name: 'Green apples',
+    description: null,
+    price: 34.5,
+    categoryId: 4,
+    rowVersion: 'AQIDBA==',
+  })
+  assert.equal(product.name, 'Green apples')
+  assert.equal(product.rowVersion, 'BQYHCA==')
+})
+
+test('deleteProduct submits an authenticated delete request', async () => {
+  const calls = installFetchResponses(
+    jsonResponse({ token: 'csrf-token' }),
+    new Response(null, { status: 204 }),
+  )
+  const controller = new AbortController()
+
+  await deleteProduct(12, controller.signal)
+
+  assert.equal(calls[1].input, '/api/products/12')
+  assert.equal(calls[1].init.method, 'DELETE')
+  assert.equal(calls[1].init.signal, controller.signal)
+  assert.equal(
+    new Headers(calls[1].init.headers).get('X-CSRF-TOKEN'),
+    'csrf-token',
   )
 })
 

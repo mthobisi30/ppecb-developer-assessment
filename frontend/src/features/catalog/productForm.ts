@@ -1,6 +1,10 @@
 import { ApiError } from '../../api/index.ts'
 import type { ValidationProblemDetails } from '../../api/index.ts'
-import type { CreateProductInput } from './catalogTypes.ts'
+import type {
+  CreateProductInput,
+  Product,
+  UpdateProductInput,
+} from './catalogTypes.ts'
 
 export interface ProductFormValues {
   name: string
@@ -19,6 +23,22 @@ export interface ProductFieldErrors {
 export interface ProductFormFailure {
   fieldErrors: ProductFieldErrors
   formError: string | null
+}
+
+export function getProductFormValues(product?: Product): ProductFormValues {
+  return product === undefined
+    ? {
+        name: '',
+        description: '',
+        price: '',
+        categoryId: '',
+      }
+    : {
+        name: product.name,
+        description: product.description ?? '',
+        price: product.price.toString(),
+        categoryId: product.categoryId.toString(),
+      }
 }
 
 export function validateProductForm(
@@ -60,11 +80,21 @@ export function toCreateProductInput(
   }
 }
 
+export function toUpdateProductInput(
+  values: ProductFormValues,
+  rowVersion: string,
+): UpdateProductInput {
+  return {
+    ...toCreateProductInput(values),
+    rowVersion,
+  }
+}
+
 export function getProductFormFailure(error: unknown): ProductFormFailure {
   if (!(error instanceof ApiError)) {
     return {
       fieldErrors: {},
-      formError: 'The product could not be added. Please try again.',
+      formError: 'The product could not be saved. Please try again.',
     }
   }
 

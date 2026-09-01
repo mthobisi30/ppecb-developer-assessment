@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { createProduct, getCategories } from './catalogApi.ts'
+import { createProduct, getCategories, updateProduct } from './catalogApi.ts'
 import {
   getProductFormFailure,
+  getProductFormValues,
   toCreateProductInput,
+  toUpdateProductInput,
   validateProductForm,
 } from './productForm.ts'
 import type { ProductFieldErrors, ProductFormValues } from './productForm.ts'
@@ -11,18 +13,12 @@ import type { Category, Product } from './catalogTypes.ts'
 
 interface ProductFormProps {
   onCancel: () => void
-  onCreated: (product: Product) => void
+  onSaved: (product: Product) => void
+  product?: Product
 }
 
-const initialValues: ProductFormValues = {
-  name: '',
-  description: '',
-  price: '',
-  categoryId: '',
-}
-
-export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
-  const [values, setValues] = useState(initialValues)
+export function ProductForm({ onCancel, onSaved, product }: ProductFormProps) {
+  const [values, setValues] = useState(() => getProductFormValues(product))
   const [fieldErrors, setFieldErrors] = useState<ProductFieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[] | null>(null)
@@ -35,7 +31,10 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
 
     void getCategories(controller.signal)
       .then((result) => {
-        setCategories(result.filter((category) => category.isActive))
+        setCategories(result.filter(
+          (category) => category.isActive
+            || category.categoryId === product?.categoryId,
+        ))
       })
       .catch(() => {
         if (!controller.signal.aborted) {
@@ -44,7 +43,7 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
       })
 
     return () => controller.abort()
-  }, [categoryRequestVersion])
+  }, [categoryRequestVersion, product?.categoryId])
 
   function retryCategories() {
     setCategories(null)
@@ -66,6 +65,13 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
     }
     const errors = validateProductForm(normalizedValues)
 
+    if (categories !== null && !categories.some(
+      (category) => category.isActive
+        && category.categoryId === Number(normalizedValues.categoryId),
+    )) {
+      errors.categoryId = 'Select an active category.'
+    }
+
     setFieldErrors(errors)
     setFormError(null)
 
@@ -76,8 +82,14 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
     setIsSubmitting(true)
 
     try {
-      const product = await createProduct(toCreateProductInput(normalizedValues))
-      onCreated(product)
+      const input = toCreateProductInput(normalizedValues)
+      const savedProduct = product === undefined
+        ? await createProduct(input)
+        : await updateProduct(
+            product.productId,
+            toUpdateProductInput(normalizedValues, product.rowVersion),
+          )
+      onSaved(savedProduct)
     } catch (error) {
       const failure = getProductFormFailure(error)
       setFieldErrors(failure.fieldErrors)
@@ -87,23 +99,16 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
     }
   }
 
-  const hasCategories = categories !== null && categories.length > 0
+  const hasCategories = categories?.some((category) => category.isActive) ?? false
+  const isEditing = product !== undefined
 
   return (
     <section className="product-form-panel" aria-labelledby="product-form-title">
       <div className="product-form-heading">
         <div>
-          <h2 id="product-form-title">Add product</h2>
-          <p>Enter the product details below.</p>
+          <h2 id="product-form-title">{isEditing ? 'Edit product' : 'Add product'}</h2>
+          <p>{isEditing ? `Update ${product.name}.` : 'Enter the product details below.'}</p>
         </div>
-        <button
-          className="text-button"
-          disabled={isSubmitting}
-          onClick={onCancel}
-          type="button"
-        >
-          Close
-        </button>
       </div>
 
       <form onSubmit={(event) => void handleSubmit(event)} noValidate>
@@ -157,12 +162,16 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
                     : 'Select category'}
               </option>
               {categories?.map((category) => (
-                <option key={category.categoryId} value={category.categoryId}>
-                  {category.name}
+                <option
+                  disabled={!category.isActive}
+                  key={category.categoryId}
+                  value={category.categoryId}
+                >
+                  {category.name}{category.isActive ? '' : ' (inactive)'}
                 </option>
               ))}
             </select>
-            {categories?.length === 0 && (
+            {categories !== null && !hasCategories && (
               <span className="field-help">No active categories are available.</span>
             )}
           </FormField>
@@ -220,7 +229,9 @@ export function ProductForm({ onCancel, onCreated }: ProductFormProps) {
             disabled={isSubmitting || !hasCategories}
             type="submit"
           >
-            {isSubmitting ? 'Adding product...' : 'Add product'}
+            {isSubmitting
+              ? isEditing ? 'Saving changes...' : 'Adding product...'
+              : isEditing ? 'Save changes' : 'Add product'}
           </button>
         </div>
       </form>

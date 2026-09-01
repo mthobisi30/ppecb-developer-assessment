@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types --test src/api/apiClient.test.ts src/features/auth/auth.test.ts src/features/catalog/catalogApi.test.ts src/features/catalog/catalogState.test.ts src/features/catalog/productForm.test.ts",
+    "test": "node --experimental-strip-types --test src/api/apiClient.test.ts src/features/auth/auth.test.ts src/features/catalog/catalogApi.test.ts src/features/catalog/catalogState.test.ts src/features/catalog/productActions.test.ts src/features/catalog/productForm.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

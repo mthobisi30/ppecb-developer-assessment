@@ -4,6 +4,7 @@ import type {
   CreateProductInput,
   Product,
   ProductPage,
+  UpdateProductInput,
 } from './catalogTypes.ts'
 
 export interface ProductPageOptions {
@@ -43,9 +44,7 @@ export function uploadProductImage(
   file: File,
   signal?: AbortSignal,
 ): Promise<Product> {
-  if (!Number.isInteger(productId) || productId < 1) {
-    throw new RangeError('Product ID must be a positive integer.')
-  }
+  assertProductId(productId)
 
   const formData = new FormData()
   formData.append('file', file)
@@ -55,4 +54,36 @@ export function uploadProductImage(
     body: formData,
     signal,
   })
+}
+
+export function updateProduct(
+  productId: number,
+  input: UpdateProductInput,
+  signal?: AbortSignal,
+): Promise<Product> {
+  assertProductId(productId)
+
+  return apiRequest<Product>(`/products/${productId}`, {
+    method: 'PUT',
+    json: input,
+    signal,
+  })
+}
+
+export function deleteProduct(
+  productId: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  assertProductId(productId)
+
+  return apiRequest<void>(`/products/${productId}`, {
+    method: 'DELETE',
+    signal,
+  })
+}
+
+function assertProductId(productId: number): void {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new RangeError('Product ID must be a positive integer.')
+  }
 }

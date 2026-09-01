@@ -3,7 +3,9 @@ import test from 'node:test'
 import { ApiError } from '../../api/index.ts'
 import {
   getProductFormFailure,
+  getProductFormValues,
   toCreateProductInput,
+  toUpdateProductInput,
   validateProductForm,
 } from './productForm.ts'
 
@@ -53,6 +55,35 @@ test('toCreateProductInput converts form values to an API request', () => {
   })
 })
 
+test('product form helpers initialise and submit existing product details', () => {
+  const product = {
+    productId: 12,
+    productCode: 'PROD-202609-001',
+    name: 'Apples',
+    description: null,
+    price: 29.95,
+    categoryId: 4,
+    categoryName: 'Fruit',
+    imagePath: null,
+    rowVersion: 'AQIDBA==',
+  }
+  const values = getProductFormValues(product)
+
+  assert.deepEqual(values, {
+    name: 'Apples',
+    description: '',
+    price: '29.95',
+    categoryId: '4',
+  })
+  assert.deepEqual(toUpdateProductInput(values, product.rowVersion), {
+    name: 'Apples',
+    description: null,
+    price: 29.95,
+    categoryId: 4,
+    rowVersion: 'AQIDBA==',
+  })
+})
+
 test('getProductFormFailure maps server validation errors to fields', () => {
   const error = new ApiError(400, {
     status: 400,
@@ -84,6 +115,6 @@ test('getProductFormFailure preserves general request failures', () => {
   })
   assert.deepEqual(getProductFormFailure(new TypeError('Network failure')), {
     fieldErrors: {},
-    formError: 'The product could not be added. Please try again.',
+    formError: 'The product could not be saved. Please try again.',
   })
 })

@@ -1,19 +1,28 @@
 import { useEffect, useReducer, useState } from 'react'
 import { getProductPage } from './catalogApi.ts'
+import { DeleteProductConfirmation } from './DeleteProductConfirmation.tsx'
 import { ProductForm } from './ProductForm.tsx'
+import { ProductImageForm } from './ProductImageForm.tsx'
 import {
   catalogReducer,
   formatProductPrice,
   getCatalogErrorMessage,
+  getPageAfterProductDelete,
   getProductRangeLabel,
   initialCatalogState,
 } from './catalogState.ts'
 import type { Product, ProductPage } from './catalogTypes.ts'
 
+type ProductAction =
+  | { kind: 'create' }
+  | { kind: 'edit'; product: Product }
+  | { kind: 'image'; product: Product }
+  | { kind: 'delete'; product: Product }
+
 export function CatalogPage() {
   const [state, dispatch] = useReducer(catalogReducer, initialCatalogState)
   const [requestVersion, setRequestVersion] = useState(0)
-  const [isAddingProduct, setIsAddingProduct] = useState(false)
+  const [activeAction, setActiveAction] = useState<ProductAction | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -45,11 +54,36 @@ export function CatalogPage() {
     setRequestVersion((version) => version + 1)
   }
 
-  function handleProductCreated(product: Product) {
-    setIsAddingProduct(false)
-    setSuccessMessage(`${product.name} was added to the catalogue.`)
-    dispatch({ type: 'pageRequested', page: 1 })
+  function openAction(action: ProductAction) {
+    setActiveAction(action)
+    setSuccessMessage(null)
+  }
+
+  function finishAction(page: number, message: string) {
+    setActiveAction(null)
+    setSuccessMessage(message)
+    dispatch({ type: 'pageRequested', page })
     setRequestVersion((version) => version + 1)
+  }
+
+  function handleProductCreated(product: Product) {
+    finishAction(1, `${product.name} was added to the catalogue.`)
+  }
+
+  function handleProductUpdated(product: Product) {
+    finishAction(state.page, `${product.name} was updated.`)
+  }
+
+  function handleImageUploaded(product: Product) {
+    finishAction(state.page, `The image for ${product.name} was updated.`)
+  }
+
+  function handleProductDeleted(product: Product) {
+    const targetPage = getPageAfterProductDelete(
+      state.page,
+      state.data?.items.length ?? 0,
+    )
+    finishAction(targetPage, `${product.name} was deleted.`)
   }
 
   return (
@@ -57,15 +91,12 @@ export function CatalogPage() {
       <div className="catalog-heading">
         <div>
           <h1 id="catalog-title">Product catalogue</h1>
-          <p>View the products registered in the catalogue.</p>
+          <p>View and manage the products registered in the catalogue.</p>
         </div>
-        {!isAddingProduct && (
+        {activeAction === null && (
           <button
             className="button button-primary catalog-add-button"
-            onClick={() => {
-              setIsAddingProduct(true)
-              setSuccessMessage(null)
-            }}
+            onClick={() => openAction({ kind: 'create' })}
             type="button"
           >
             Add product
@@ -78,23 +109,47 @@ export function CatalogPage() {
           {successMessage}
         </p>
       )}
-      {isAddingProduct && (
+      {activeAction?.kind === 'create' && (
         <ProductForm
-          onCancel={() => setIsAddingProduct(false)}
-          onCreated={handleProductCreated}
+          onCancel={() => setActiveAction(null)}
+          onSaved={handleProductCreated}
+        />
+      )}
+      {activeAction?.kind === 'edit' && (
+        <ProductForm
+          onCancel={() => setActiveAction(null)}
+          onSaved={handleProductUpdated}
+          product={activeAction.product}
+        />
+      )}
+      {activeAction?.kind === 'image' && (
+        <ProductImageForm
+          onCancel={() => setActiveAction(null)}
+          onUploaded={handleImageUploaded}
+          product={activeAction.product}
+        />
+      )}
+      {activeAction?.kind === 'delete' && (
+        <DeleteProductConfirmation
+          onCancel={() => setActiveAction(null)}
+          onDeleted={handleProductDeleted}
+          product={activeAction.product}
         />
       )}
 
-      {state.status === 'loading' && <CatalogLoading />}
-      {state.status === 'error' && (
+      {activeAction === null && state.status === 'loading' && <CatalogLoading />}
+      {activeAction === null && state.status === 'error' && (
         <CatalogError message={state.error ?? ''} onRetry={retry} />
       )}
-      {state.status === 'ready' && state.data !== null && (
+      {activeAction === null && state.status === 'ready' && state.data !== null && (
         state.data.totalCount === 0
           ? <EmptyCatalog />
           : (
               <CatalogResults
                 data={state.data}
+                onDelete={(product) => openAction({ kind: 'delete', product })}
+                onEdit={(product) => openAction({ kind: 'edit', product })}
+                onImage={(product) => openAction({ kind: 'image', product })}
                 onPageChange={selectPage}
               />
             )
@@ -140,10 +195,19 @@ function EmptyCatalog() {
 
 interface CatalogResultsProps {
   data: ProductPage
+  onDelete: (product: Product) => void
+  onEdit: (product: Product) => void
+  onImage: (product: Product) => void
   onPageChange: (page: number) => void
 }
 
-function CatalogResults({ data, onPageChange }: CatalogResultsProps) {
+function CatalogResults({
+  data,
+  onDelete,
+  onEdit,
+  onImage,
+  onPageChange,
+}: CatalogResultsProps) {
   return (
     <div className="catalog-results">
       <div className="product-table-scroll">
@@ -155,11 +219,18 @@ function CatalogResults({ data, onPageChange }: CatalogResultsProps) {
               <th scope="col">Code</th>
               <th scope="col">Category</th>
               <th className="price-column" scope="col">Price</th>
+              <th className="actions-column" scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
             {data.items.map((product) => (
-              <ProductRow key={product.productId} product={product} />
+              <ProductRow
+                key={product.productId}
+                onDelete={onDelete}
+                onEdit={onEdit}
+                onImage={onImage}
+                product={product}
+              />
             ))}
           </tbody>
         </table>
@@ -190,7 +261,19 @@ function CatalogResults({ data, onPageChange }: CatalogResultsProps) {
   )
 }
 
-function ProductRow({ product }: { product: Product }) {
+interface ProductRowProps {
+  onDelete: (product: Product) => void
+  onEdit: (product: Product) => void
+  onImage: (product: Product) => void
+  product: Product
+}
+
+function ProductRow({
+  onDelete,
+  onEdit,
+  onImage,
+  product,
+}: ProductRowProps) {
   return (
     <tr>
       <td>
@@ -202,6 +285,34 @@ function ProductRow({ product }: { product: Product }) {
       <td className="product-code">{product.productCode}</td>
       <td>{product.categoryName}</td>
       <td className="price-column">{formatProductPrice(product.price)}</td>
+      <td className="actions-column">
+        <div className="row-actions">
+          <button
+            aria-label={`Edit ${product.name}`}
+            className="row-action-button"
+            onClick={() => onEdit(product)}
+            type="button"
+          >
+            Edit
+          </button>
+          <button
+            aria-label={`Change image for ${product.name}`}
+            className="row-action-button"
+            onClick={() => onImage(product)}
+            type="button"
+          >
+            Image
+          </button>
+          <button
+            aria-label={`Delete ${product.name}`}
+            className="row-action-button row-action-danger"
+            onClick={() => onDelete(product)}
+            type="button"
+          >
+            Delete
+          </button>
+        </div>
+      </td>
     </tr>
   )
 }

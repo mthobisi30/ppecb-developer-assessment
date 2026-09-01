@@ -5,6 +5,7 @@ import {
   catalogReducer,
   formatProductPrice,
   getCatalogErrorMessage,
+  getPageAfterProductDelete,
   getProductRangeLabel,
   initialCatalogState,
 } from './catalogState.ts'
@@ -102,4 +103,10 @@ test('catalog presentation helpers format prices and result ranges', () => {
     totalCount: 0,
     totalPages: 0,
   }), '0 products')
+})
+
+test('getPageAfterProductDelete moves back when the final row is removed', () => {
+  assert.equal(getPageAfterProductDelete(3, 1), 2)
+  assert.equal(getPageAfterProductDelete(3, 2), 3)
+  assert.equal(getPageAfterProductDelete(1, 1), 1)
 })

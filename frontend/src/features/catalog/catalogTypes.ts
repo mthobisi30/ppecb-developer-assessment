@@ -21,6 +21,10 @@ export interface CreateProductInput {
   categoryId: number
 }
 
+export interface UpdateProductInput extends CreateProductInput {
+  rowVersion: string
+}
+
 export interface Category {
   categoryId: number
   name: string
