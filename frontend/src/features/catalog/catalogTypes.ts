@@ -24,3 +24,7 @@ export interface CreateProductInput {
 export interface UpdateProductInput extends CreateProductInput {
   rowVersion: string
 }
+
+export interface ProductImportResult {
+  importedCount: number
+}

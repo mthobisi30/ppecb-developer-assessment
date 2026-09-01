@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { resetCsrfToken } from '../../api/index.ts'
+import { ApiError, resetCsrfToken } from '../../api/index.ts'
 import {
   createProduct,
   deleteProduct,
+  exportProductsToSpreadsheet,
   getProductPage,
+  importProductsFromSpreadsheet,
   updateProduct,
   uploadProductImage,
 } from './catalogApi.ts'
@@ -217,6 +219,71 @@ test('deleteProduct submits an authenticated delete request', async () => {
   assert.equal(
     new Headers(calls[1].init.headers).get('X-CSRF-TOKEN'),
     'csrf-token',
+  )
+})
+
+test('importProductsFromSpreadsheet submits multipart data and returns the import count', async () => {
+  const calls = installFetchResponses(
+    jsonResponse({ token: 'csrf-token' }),
+    jsonResponse({ importedCount: 8 }),
+  )
+  const file = new File(['workbook'], 'products.xlsx', {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const controller = new AbortController()
+
+  const result = await importProductsFromSpreadsheet(file, controller.signal)
+
+  assert.equal(calls[1].input, '/api/products/import')
+  assert.equal(calls[1].init.method, 'POST')
+  assert.equal(calls[1].init.signal, controller.signal)
+  assert.equal(new Headers(calls[1].init.headers).has('Content-Type'), false)
+  assert.ok(calls[1].init.body instanceof FormData)
+  assert.equal(calls[1].init.body.get('file'), file)
+  assert.equal(result.importedCount, 8)
+})
+
+test('importProductsFromSpreadsheet preserves row validation errors', async () => {
+  installFetchResponses(
+    jsonResponse({ token: 'csrf-token' }),
+    jsonResponse({
+      status: 400,
+      title: 'Product import validation failed.',
+      errors: {
+        'Rows[2].CategoryCode': ['The category code was not found.'],
+      },
+    }, 400),
+  )
+  const file = new File(['workbook'], 'products.xlsx')
+
+  await assert.rejects(
+    importProductsFromSpreadsheet(file),
+    (error: unknown) => error instanceof ApiError
+      && error.status === 400
+      && error.problem.errors !== undefined,
+  )
+})
+
+test('exportProductsToSpreadsheet downloads the generated workbook', async () => {
+  const calls = installFetchResponses(new Response(
+    new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
+    {
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    },
+  ))
+  const controller = new AbortController()
+
+  const workbook = await exportProductsToSpreadsheet(controller.signal)
+
+  assert.equal(calls[0].input, '/api/products/export')
+  assert.equal(calls[0].init.method, 'GET')
+  assert.equal(calls[0].init.signal, controller.signal)
+  assert.equal(workbook.size, 4)
+  assert.equal(
+    workbook.type,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   )
 })
 

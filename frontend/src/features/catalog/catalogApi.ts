@@ -1,7 +1,8 @@
-import { apiRequest } from '../../api/index.ts'
+import { apiDownload, apiRequest } from '../../api/index.ts'
 import type {
   CreateProductInput,
   Product,
+  ProductImportResult,
   ProductPage,
   UpdateProductInput,
 } from './catalogTypes.ts'
@@ -75,6 +76,26 @@ export function deleteProduct(
     method: 'DELETE',
     signal,
   })
+}
+
+export function importProductsFromSpreadsheet(
+  file: File,
+  signal?: AbortSignal,
+): Promise<ProductImportResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return apiRequest<ProductImportResult>('/products/import', {
+    method: 'POST',
+    body: formData,
+    signal,
+  })
+}
+
+export function exportProductsToSpreadsheet(
+  signal?: AbortSignal,
+): Promise<Blob> {
+  return apiDownload('/products/export', { signal })
 }
 
 function assertProductId(productId: number): void {
