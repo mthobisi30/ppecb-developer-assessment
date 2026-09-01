@@ -37,3 +37,22 @@ export function createProduct(
     signal,
   })
 }
+
+export function uploadProductImage(
+  productId: number,
+  file: File,
+  signal?: AbortSignal,
+): Promise<Product> {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new RangeError('Product ID must be a positive integer.')
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return apiRequest<Product>(`/products/${productId}/image`, {
+    method: 'POST',
+    body: formData,
+    signal,
+  })
+}

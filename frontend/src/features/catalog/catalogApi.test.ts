@@ -5,6 +5,7 @@ import {
   createProduct,
   getCategories,
   getProductPage,
+  uploadProductImage,
 } from './catalogApi.ts'
 
 interface FetchCall {
@@ -127,6 +128,54 @@ test('createProduct submits product details and returns the created product', as
   })
   assert.equal(product.productCode, 'PROD-202609-001')
   assert.equal(product.categoryName, 'Fruit')
+})
+
+test('uploadProductImage submits multipart data and returns the updated product', async () => {
+  const calls = installFetchResponses(
+    jsonResponse({ token: 'csrf-token' }),
+    jsonResponse({
+      productId: 12,
+      productCode: 'PROD-202609-001',
+      name: 'Apples',
+      description: 'Fresh apples',
+      price: 29.95,
+      categoryId: 4,
+      categoryName: 'Fruit',
+      imagePath: '/uploads/products/apples.png',
+      rowVersion: 'BQYHCA==',
+    }),
+  )
+  const file = new File(
+    [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
+    'apples.png',
+    { type: 'image/png' },
+  )
+  const controller = new AbortController()
+
+  const product = await uploadProductImage(12, file, controller.signal)
+
+  assert.equal(calls[1].input, '/api/products/12/image')
+  assert.equal(calls[1].init.method, 'POST')
+  assert.equal(calls[1].init.signal, controller.signal)
+  assert.equal(
+    new Headers(calls[1].init.headers).get('X-CSRF-TOKEN'),
+    'csrf-token',
+  )
+  assert.equal(new Headers(calls[1].init.headers).has('Content-Type'), false)
+  assert.ok(calls[1].init.body instanceof FormData)
+  assert.equal(calls[1].init.body.get('file'), file)
+  assert.equal(product.imagePath, '/uploads/products/apples.png')
+  assert.equal(product.rowVersion, 'BQYHCA==')
+})
+
+test('uploadProductImage rejects invalid product identifiers before requesting', () => {
+  const file = new File([], 'apples.png', { type: 'image/png' })
+
+  assert.throws(
+    () => uploadProductImage(0, file),
+    (error: unknown) => error instanceof RangeError
+      && error.message === 'Product ID must be a positive integer.',
+  )
 })
 
 function installFetchResponses(...responses: Response[]): FetchCall[] {
