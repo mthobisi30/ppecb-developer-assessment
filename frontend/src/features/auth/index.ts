@@ -1,4 +1,5 @@
 export { AuthProvider } from './AuthProvider.tsx'
+export { LoginPage } from './LoginPage.tsx'
 export {
   getCurrentUser,
   login,

@@ -9,6 +9,11 @@ import {
 } from './authApi.ts'
 import { loadAuthSession } from './authSession.ts'
 import { authReducer, initialAuthState } from './authState.ts'
+import {
+  getLoginErrorMessage,
+  validateLoginInput,
+} from './loginForm.ts'
+import { ApiError } from '../../api/index.ts'
 
 interface FetchCall {
   input: RequestInfo | URL
@@ -131,6 +136,42 @@ test('authReducer transitions between session states', () => {
     user: null,
     error: 'API unavailable.',
   })
+})
+
+test('validateLoginInput reports missing and malformed credentials', () => {
+  assert.deepEqual(validateLoginInput({ email: '', password: '' }), {
+    email: 'Enter your email address.',
+    password: 'Enter your password.',
+  })
+  assert.deepEqual(validateLoginInput({
+    email: 'invalid-address',
+    password: 'password',
+  }), {
+    email: 'Enter a valid email address.',
+  })
+})
+
+test('validateLoginInput accepts complete credentials', () => {
+  assert.deepEqual(validateLoginInput({
+    email: 'person@example.com',
+    password: 'ValidPassword1!',
+  }), {})
+})
+
+test('getLoginErrorMessage presents authentication failures safely', () => {
+  const unauthorized = new ApiError(401, {
+    status: 401,
+    title: 'Invalid email or password.',
+  })
+
+  assert.equal(
+    getLoginErrorMessage(unauthorized),
+    'The email address or password is incorrect.',
+  )
+  assert.equal(
+    getLoginErrorMessage(new TypeError('Network failure')),
+    'Sign in could not be completed. Please try again.',
+  )
 })
 
 function installFetchResponses(...responses: Response[]): FetchCall[] {

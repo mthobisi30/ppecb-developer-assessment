@@ -47,6 +47,15 @@ Do not move business rules into controllers, database configuration, or frontend
 - Handle loading, empty, error, and success states explicitly when displaying remote data.
 - Maintain accessible labels, semantic elements, and keyboard interaction.
 
+## User interface
+
+- Prioritise the task the user came to complete. Keep screens direct and remove promotional or decorative copy that does not help with that task.
+- Use a restrained visual system: flat colours, ordinary typography, clear spacing, simple surfaces, and consistent form controls.
+- Do not introduce gradients, fabricated brand marks, oversized display text, decorative labels, split marketing panels, or heavy shadows unless an approved design specifically requires them.
+- Keep form labels visible, inputs comfortably sized, focus states obvious, and validation messages adjacent to the relevant control.
+- Do not render links, buttons, or menu items until their behaviour is implemented.
+- Treat an approved visual reference as the source of truth for layout, colour, typography, and component styling.
+
 ## Testing
 
 - Add or update tests with every behaviour change.
