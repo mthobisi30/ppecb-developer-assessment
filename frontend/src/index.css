@@ -32,7 +32,7 @@ button:disabled {
   opacity: 0.7;
 }
 
-.login-page,
+.auth-page,
 .status-screen {
   display: grid;
   min-height: 100vh;
@@ -41,16 +41,24 @@ button:disabled {
   background: #fff;
 }
 
-.login-card,
+.auth-page {
+  padding: 2rem 1.5rem;
+}
+
+.registration-page {
+  padding-block: 1rem;
+}
+
+.auth-card,
 .status-card {
   width: min(100%, 39rem);
-  padding: 5rem 4.25rem;
+  padding: 3.25rem 4.25rem;
   border: 1px solid #dedede;
   border-radius: 0.75rem;
   background: #fff;
 }
 
-.login-card h1,
+.auth-card h1,
 .status-card h1 {
   margin: 0 0 1.2rem;
   color: #444;
@@ -59,15 +67,30 @@ button:disabled {
   text-align: center;
 }
 
-.login-description {
+.auth-description {
   margin: -0.5rem 0 2rem;
   color: #666;
   text-align: center;
 }
 
-.login-form {
+.auth-form {
   display: grid;
-  gap: 1.55rem;
+  gap: 1.2rem;
+}
+
+.registration-card {
+  padding-block: 2.5rem;
+}
+
+.registration-form {
+  gap: 1rem;
+}
+
+.field-help {
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .field {
@@ -106,7 +129,7 @@ button:disabled {
 
 .field input {
   width: 100%;
-  min-height: 5rem;
+  min-height: 4.25rem;
   padding: 1.25rem;
   border: 0;
   border-radius: 0;
@@ -201,6 +224,36 @@ button:disabled {
   color: #772722;
   border-color: #e2aaa6;
   background: #fff1f0;
+}
+
+.alert-success {
+  color: #215f37;
+  border-color: #a9d2b5;
+  background: #effaf2;
+}
+
+.auth-switch {
+  margin: 1.5rem 0 0;
+  color: #555;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.text-button {
+  padding: 0.2rem 0.35rem;
+  border: 0;
+  color: #087f9b;
+  background: transparent;
+  font-weight: 600;
+}
+
+.text-button:hover {
+  text-decoration: underline;
+}
+
+.text-button:focus-visible {
+  outline: 2px solid #087f9b;
+  outline-offset: 2px;
 }
 
 .status-screen {
@@ -311,12 +364,12 @@ button:disabled {
 }
 
 @media (max-width: 600px) {
-  .login-page,
+  .auth-page,
   .status-screen {
     padding: 1rem;
   }
 
-  .login-card,
+  .auth-card,
   .status-card {
     padding: 2.5rem 1.5rem;
   }

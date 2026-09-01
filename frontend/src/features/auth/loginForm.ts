@@ -1,5 +1,6 @@
 import { ApiError } from '../../api/index.ts'
 import type { LoginInput } from './authApi.ts'
+import { getEmailError } from './formValidation.ts'
 
 export interface LoginFieldErrors {
   email?: string
@@ -11,14 +12,10 @@ export function validateLoginInput(
   showRequiredErrors = true,
 ): LoginFieldErrors {
   const errors: LoginFieldErrors = {}
-  const email = input.email.trim()
+  const emailError = getEmailError(input.email, showRequiredErrors)
 
-  if (email.length === 0) {
-    if (showRequiredErrors) {
-      errors.email = 'Enter your email address.'
-    }
-  } else if (!isEmailAddress(email)) {
-    errors.email = 'Enter a valid email address.'
+  if (emailError !== undefined) {
+    errors.email = emailError
   }
 
   if (input.password.length === 0 && showRequiredErrors) {
@@ -38,8 +35,4 @@ export function getLoginErrorMessage(error: unknown): string {
   }
 
   return 'Sign in could not be completed. Please try again.'
-}
-
-function isEmailAddress(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }

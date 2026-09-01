@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ApiError } from './api/index.ts'
-import { LoginPage, useAuth } from './features/auth/index.ts'
+import { AuthenticationPage, useAuth } from './features/auth/index.ts'
 
 function App() {
   const { error, logout, refresh, status, user } = useAuth()
@@ -10,7 +10,7 @@ function App() {
   }
 
   if (status === 'signedOut') {
-    return <LoginPage />
+    return <AuthenticationPage />
   }
 
   if (status === 'authenticated' && user !== null) {

@@ -13,6 +13,10 @@ import {
   getLoginErrorMessage,
   validateLoginInput,
 } from './loginForm.ts'
+import {
+  getRegistrationFailure,
+  validateRegistrationInput,
+} from './registrationForm.ts'
 import { ApiError } from '../../api/index.ts'
 
 interface FetchCall {
@@ -172,6 +176,64 @@ test('getLoginErrorMessage presents authentication failures safely', () => {
     getLoginErrorMessage(new TypeError('Network failure')),
     'Sign in could not be completed. Please try again.',
   )
+})
+
+test('validateRegistrationInput reports incomplete and invalid account details', () => {
+  assert.deepEqual(validateRegistrationInput({
+    confirmPassword: '',
+    email: 'invalid-address',
+    password: 'weak',
+  }), {
+    email: 'Enter a valid email address.',
+    password: 'Use at least 8 characters, including 4 unique characters, upper and lowercase letters, a number, and a symbol.',
+    confirmPassword: 'Confirm your password.',
+  })
+
+  assert.deepEqual(validateRegistrationInput({
+    confirmPassword: 'DifferentPassword2!',
+    email: 'person@example.com',
+    password: 'ValidPassword1!',
+  }), {
+    confirmPassword: 'The passwords do not match.',
+  })
+})
+
+test('validateRegistrationInput accepts matching account details', () => {
+  assert.deepEqual(validateRegistrationInput({
+    confirmPassword: 'ValidPassword1!',
+    email: 'person@example.com',
+    password: 'ValidPassword1!',
+  }), {})
+})
+
+test('getRegistrationFailure maps duplicate and validation responses to fields', () => {
+  const duplicate = new ApiError(409, {
+    status: 409,
+    title: 'Registration conflict.',
+    errors: {
+      Email: ['An account with this email address already exists.'],
+    },
+  })
+  const invalidPassword = new ApiError(400, {
+    status: 400,
+    title: 'Registration validation failed.',
+    errors: {
+      Password: ['Password requirements were not met.'],
+    },
+  })
+
+  assert.deepEqual(getRegistrationFailure(duplicate), {
+    fieldErrors: {
+      email: 'An account with this email address already exists.',
+    },
+    formError: null,
+  })
+  assert.deepEqual(getRegistrationFailure(invalidPassword), {
+    fieldErrors: {
+      password: 'Password requirements were not met.',
+    },
+    formError: null,
+  })
 })
 
 function installFetchResponses(...responses: Response[]): FetchCall[] {

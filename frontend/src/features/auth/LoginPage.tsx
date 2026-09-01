@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { LockIcon, UserIcon } from './AuthIcons.tsx'
 import type { LoginInput } from './authApi.ts'
 import {
   getLoginErrorMessage,
@@ -7,9 +8,19 @@ import {
 } from './loginForm.ts'
 import { useAuth } from './useAuth.ts'
 
-export function LoginPage() {
+interface LoginPageProps {
+  initialEmail?: string
+  notice?: string | null
+  onCreateAccount?: () => void
+}
+
+export function LoginPage({
+  initialEmail = '',
+  notice = null,
+  onCreateAccount,
+}: LoginPageProps) {
   const { login } = useAuth()
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState(() => validateLoginInput({
@@ -43,12 +54,15 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login-page">
-      <section className="login-card" aria-labelledby="login-heading">
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="login-heading">
         <h1 id="login-heading">Sign In</h1>
-        <p className="login-description">Sign in to access your products.</p>
+        <p className="auth-description">Sign in to access your products.</p>
 
-        <form className="login-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        <form className="auth-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+          {notice !== null && (
+            <p className="alert alert-success" role="status">{notice}</p>
+          )}
           {submitError !== null && (
             <p className="alert alert-error" role="alert">{submitError}</p>
           )}
@@ -115,25 +129,16 @@ export function LoginPage() {
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+
+        {onCreateAccount !== undefined && (
+          <p className="auth-switch">
+            Don&apos;t have an account?
+            <button className="text-button" onClick={onCreateAccount} type="button">
+              Create account
+            </button>
+          </p>
+        )}
       </section>
     </main>
-  )
-}
-
-function UserIcon() {
-  return (
-    <svg className="input-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4.5 21c.7-4.1 3.2-6.2 7.5-6.2s6.8 2.1 7.5 6.2" />
-    </svg>
-  )
-}
-
-function LockIcon() {
-  return (
-    <svg className="input-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4.5" y="10" width="15" height="11" rx="1" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-    </svg>
   )
 }
