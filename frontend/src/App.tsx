@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ApiError } from './api/index.ts'
 import { AuthenticationPage, useAuth } from './features/auth/index.ts'
+import { CatalogPage } from './features/catalog/index.ts'
 
 function App() {
   const { error, logout, refresh, status, user } = useAuth()
@@ -121,13 +122,10 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
         </div>
       </header>
       <main className="app-content">
-        <h1>Product catalogue</h1>
-        <p className="page-introduction">
-          View and maintain the products registered in the catalogue.
-        </p>
         {logoutError !== null && (
           <p className="alert alert-error" role="alert">{logoutError}</p>
         )}
+        <CatalogPage />
       </main>
     </div>
   )
