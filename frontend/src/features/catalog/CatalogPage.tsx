@@ -1,8 +1,12 @@
 import { useEffect, useReducer, useState } from 'react'
-import { getProductPage } from './catalogApi.ts'
+import {
+  exportProductsToSpreadsheet,
+  getProductPage,
+} from './catalogApi.ts'
 import { DeleteProductConfirmation } from './DeleteProductConfirmation.tsx'
 import { ProductForm } from './ProductForm.tsx'
 import { ProductImageForm } from './ProductImageForm.tsx'
+import { ProductSpreadsheetImport } from './ProductSpreadsheetImport.tsx'
 import {
   catalogReducer,
   formatProductPrice,
@@ -11,10 +15,12 @@ import {
   getProductRangeLabel,
   initialCatalogState,
 } from './catalogState.ts'
+import { getSpreadsheetExportError } from './spreadsheetExchange.ts'
 import type { Product, ProductPage } from './catalogTypes.ts'
 
 type ProductAction =
   | { kind: 'create' }
+  | { kind: 'import' }
   | { kind: 'edit'; product: Product }
   | { kind: 'image'; product: Product }
   | { kind: 'delete'; product: Product }
@@ -24,6 +30,8 @@ export function CatalogPage() {
   const [requestVersion, setRequestVersion] = useState(0)
   const [activeAction, setActiveAction] = useState<ProductAction | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -57,11 +65,13 @@ export function CatalogPage() {
   function openAction(action: ProductAction) {
     setActiveAction(action)
     setSuccessMessage(null)
+    setActionError(null)
   }
 
   function finishAction(page: number, message: string) {
     setActiveAction(null)
     setSuccessMessage(message)
+    setActionError(null)
     dispatch({ type: 'pageRequested', page })
     setRequestVersion((version) => version + 1)
   }
@@ -86,6 +96,26 @@ export function CatalogPage() {
     finishAction(targetPage, `${product.name} was deleted.`)
   }
 
+  function handleProductsImported(count: number) {
+    const productLabel = count === 1 ? 'product' : 'products'
+    finishAction(1, `${count} ${productLabel} imported.`)
+  }
+
+  async function handleExport() {
+    setIsExporting(true)
+    setSuccessMessage(null)
+    setActionError(null)
+
+    try {
+      downloadProductSpreadsheet(await exportProductsToSpreadsheet())
+      setSuccessMessage('Product spreadsheet exported.')
+    } catch (error) {
+      setActionError(getSpreadsheetExportError(error))
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <section className="catalog-page" aria-labelledby="catalog-title">
       <div className="catalog-heading">
@@ -94,13 +124,32 @@ export function CatalogPage() {
           <p>View and manage the products registered in the catalogue.</p>
         </div>
         {activeAction === null && (
-          <button
-            className="button button-primary catalog-add-button"
-            onClick={() => openAction({ kind: 'create' })}
-            type="button"
-          >
-            Add product
-          </button>
+          <div className="catalog-actions">
+            <button
+              className="button button-secondary"
+              disabled={isExporting}
+              onClick={() => openAction({ kind: 'import' })}
+              type="button"
+            >
+              Import
+            </button>
+            <button
+              className="button button-secondary"
+              disabled={isExporting}
+              onClick={() => void handleExport()}
+              type="button"
+            >
+              {isExporting ? 'Exporting...' : 'Export'}
+            </button>
+            <button
+              className="button button-primary"
+              disabled={isExporting}
+              onClick={() => openAction({ kind: 'create' })}
+              type="button"
+            >
+              Add product
+            </button>
+          </div>
         )}
       </div>
 
@@ -108,6 +157,17 @@ export function CatalogPage() {
         <p className="alert alert-success catalog-alert" role="status">
           {successMessage}
         </p>
+      )}
+      {actionError !== null && (
+        <p className="alert alert-error catalog-alert" role="alert">
+          {actionError}
+        </p>
+      )}
+      {activeAction?.kind === 'import' && (
+        <ProductSpreadsheetImport
+          onCancel={() => setActiveAction(null)}
+          onImported={handleProductsImported}
+        />
       )}
       {activeAction?.kind === 'create' && (
         <ProductForm
@@ -156,6 +216,17 @@ export function CatalogPage() {
       )}
     </section>
   )
+}
+
+function downloadProductSpreadsheet(workbook: Blob) {
+  const url = URL.createObjectURL(workbook)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'products.xlsx'
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
 
 function CatalogLoading() {

@@ -416,8 +416,15 @@ button:disabled {
   gap: 2rem;
 }
 
-.catalog-add-button {
+.catalog-actions {
+  display: flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.catalog-actions .button {
+  min-width: 7rem;
 }
 
 .catalog-alert {
@@ -526,26 +533,30 @@ button:disabled {
   font-weight: 600;
 }
 
-.image-file-field {
+.image-file-field,
+.spreadsheet-file-field {
   display: grid;
   align-content: start;
   gap: 0.55rem;
 }
 
-.image-file-field > label {
+.image-file-field > label,
+.spreadsheet-file-field > label {
   color: #222;
   font-size: 0.9rem;
   font-weight: 600;
 }
 
-.image-file-field input {
+.image-file-field input,
+.spreadsheet-file-field input {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ccc;
   background: #fff;
 }
 
-.image-file-field input:focus-visible {
+.image-file-field input:focus-visible,
+.spreadsheet-file-field input:focus-visible {
   outline: 3px solid rgb(2 78 96 / 35%);
   outline-offset: 2px;
 }
@@ -553,6 +564,27 @@ button:disabled {
 .selected-file {
   color: #215f37;
   font-size: 0.85rem;
+}
+
+.spreadsheet-import-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.import-errors h3 {
+  margin: 0 0 0.75rem;
+  color: #772722;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.import-errors .product-table-scroll {
+  border: 1px solid #e2aaa6;
+}
+
+.import-error-table td:first-child {
+  width: 5rem;
+  font-weight: 600;
 }
 
 .product-form-grid {
@@ -942,7 +974,12 @@ button:disabled {
     gap: 1.25rem;
   }
 
-  .catalog-add-button {
+  .catalog-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .catalog-actions .button {
     width: 100%;
   }
 
@@ -998,6 +1035,10 @@ button:disabled {
 
   .product-table {
     min-width: 57rem;
+  }
+
+  .import-error-table {
+    min-width: 34rem;
   }
 
   .category-table {
