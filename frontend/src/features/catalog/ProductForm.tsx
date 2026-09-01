@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { createProduct, getCategories, updateProduct } from './catalogApi.ts'
+import { getCategories } from '../categories/index.ts'
+import type { Category } from '../categories/index.ts'
+import { createProduct, updateProduct } from './catalogApi.ts'
 import {
   getProductFormFailure,
   getProductFormValues,
@@ -9,7 +11,7 @@ import {
   validateProductForm,
 } from './productForm.ts'
 import type { ProductFieldErrors, ProductFormValues } from './productForm.ts'
-import type { Category, Product } from './catalogTypes.ts'
+import type { Product } from './catalogTypes.ts'
 
 interface ProductFormProps {
   onCancel: () => void

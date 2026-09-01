@@ -4,7 +4,6 @@ import { resetCsrfToken } from '../../api/index.ts'
 import {
   createProduct,
   deleteProduct,
-  getCategories,
   getProductPage,
   updateProduct,
   uploadProductImage,
@@ -73,22 +72,6 @@ test('getProductPage rejects invalid page numbers before requesting', () => {
     (error: unknown) => error instanceof RangeError
       && error.message === 'Page must be a positive integer.',
   )
-})
-
-test('getCategories returns category records', async () => {
-  const calls = installFetchResponses(jsonResponse([{
-    categoryId: 4,
-    name: 'Fruit',
-    categoryCode: 'FRT001',
-    isActive: true,
-    rowVersion: 'AQIDBA==',
-  }]))
-
-  const categories = await getCategories()
-
-  assert.equal(calls[0].input, '/api/categories')
-  assert.equal(categories[0].categoryCode, 'FRT001')
-  assert.equal(categories[0].isActive, true)
 })
 
 test('createProduct submits product details and returns the created product', async () => {

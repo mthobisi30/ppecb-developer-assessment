@@ -24,11 +24,3 @@ export interface CreateProductInput {
 export interface UpdateProductInput extends CreateProductInput {
   rowVersion: string
 }
-
-export interface Category {
-  categoryId: number
-  name: string
-  categoryCode: string
-  isActive: boolean
-  rowVersion: string
-}

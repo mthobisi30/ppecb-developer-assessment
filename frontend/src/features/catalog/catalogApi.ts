@@ -1,6 +1,5 @@
 import { apiRequest } from '../../api/index.ts'
 import type {
-  Category,
   CreateProductInput,
   Product,
   ProductPage,
@@ -22,10 +21,6 @@ export function getProductPage({
 
   const parameters = new URLSearchParams({ page: page.toString() })
   return apiRequest<ProductPage>(`/products?${parameters}`, { signal })
-}
-
-export function getCategories(signal?: AbortSignal): Promise<Category[]> {
-  return apiRequest<Category[]>('/categories', { signal })
 }
 
 export function createProduct(

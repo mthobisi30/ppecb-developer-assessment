@@ -331,6 +331,43 @@ button:disabled {
   gap: 0.75rem;
 }
 
+.app-header-main {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.app-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.navigation-button {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #555;
+  background: transparent;
+}
+
+.navigation-button:hover {
+  color: #176b7e;
+  background: #eef6f8;
+}
+
+.navigation-button[aria-current="page"] {
+  color: #087f9b;
+  border-bottom-color: #087f9b;
+  font-weight: 600;
+}
+
+.navigation-button:focus-visible {
+  outline: 2px solid #087f9b;
+  outline-offset: 2px;
+}
+
 .application-name strong {
   color: #087f9b;
 }
@@ -431,6 +468,29 @@ button:disabled {
 
 .management-panel .alert {
   max-width: none;
+}
+
+.category-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.category-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.category-status-field {
+  margin-top: -0.25rem;
+}
+
+.app-content .page-action-error {
+  display: flex;
+  max-width: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .delete-panel > p {
@@ -627,7 +687,8 @@ button:disabled {
   margin-top: 0.6rem;
 }
 
-.catalog-results {
+.catalog-results,
+.category-results {
   border: 1px solid #dedede;
   background: #fff;
 }
@@ -672,6 +733,32 @@ button:disabled {
 
 .product-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.category-name {
+  color: #222;
+  font-weight: 600;
+}
+
+.status-label {
+  display: inline-block;
+  min-width: 4.75rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.status-active {
+  color: #215f37;
+  border-color: #a9d2b5;
+  background: #effaf2;
+}
+
+.status-inactive {
+  color: #666;
+  border-color: #ccc;
+  background: #f3f3f3;
 }
 
 .product-summary {
@@ -820,6 +907,21 @@ button:disabled {
     flex-direction: column;
   }
 
+  .app-header-main {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .app-navigation {
+    width: 100%;
+  }
+
+  .navigation-button {
+    flex: 1;
+  }
+
   .account-menu {
     width: 100%;
     justify-content: space-between;
@@ -851,6 +953,15 @@ button:disabled {
 
   .product-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .category-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-content .page-action-error {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .description-field {
@@ -887,6 +998,10 @@ button:disabled {
 
   .product-table {
     min-width: 57rem;
+  }
+
+  .category-table {
+    min-width: 38rem;
   }
 
   .catalog-pagination,

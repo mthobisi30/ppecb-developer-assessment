@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ApiError } from './api/index.ts'
 import { AuthenticationPage, useAuth } from './features/auth/index.ts'
+import { CategoryPage } from './features/categories/index.ts'
 import { CatalogPage } from './features/catalog/index.ts'
 
 function App() {
@@ -86,6 +87,7 @@ interface ApplicationShellProps {
 }
 
 function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
+  const [activeSection, setActiveSection] = useState<'products' | 'categories'>('products')
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -105,9 +107,29 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="application-name">
-          <strong>PPECB</strong>
-          <span>Product Catalogue</span>
+        <div className="app-header-main">
+          <div className="application-name">
+            <strong>PPECB</strong>
+            <span>Product Catalogue</span>
+          </div>
+          <nav className="app-navigation" aria-label="Main navigation">
+            <button
+              aria-current={activeSection === 'products' ? 'page' : undefined}
+              className="navigation-button"
+              onClick={() => setActiveSection('products')}
+              type="button"
+            >
+              Products
+            </button>
+            <button
+              aria-current={activeSection === 'categories' ? 'page' : undefined}
+              className="navigation-button"
+              onClick={() => setActiveSection('categories')}
+              type="button"
+            >
+              Categories
+            </button>
+          </nav>
         </div>
         <div className="account-menu">
           <span>{email}</span>
@@ -125,7 +147,7 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
         {logoutError !== null && (
           <p className="alert alert-error" role="alert">{logoutError}</p>
         )}
-        <CatalogPage />
+        {activeSection === 'products' ? <CatalogPage /> : <CategoryPage />}
       </main>
     </div>
   )
