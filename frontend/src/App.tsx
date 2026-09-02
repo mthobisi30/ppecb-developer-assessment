@@ -183,10 +183,7 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
     <div className="app-shell">
       <header className="app-header">
         <div className="app-header-main">
-          <div className="application-name">
-            <strong>PPECB</strong>
-            <span>Product Catalogue</span>
-          </div>
+          <span className="application-name">Product Catalogue</span>
           <nav className="app-navigation" aria-label="Main navigation">
             <NavLink className="navigation-button" end to={appRoutes.products}>
               Products

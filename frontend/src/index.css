@@ -371,11 +371,7 @@ button:disabled {
   outline-offset: 2px;
 }
 
-.application-name strong {
-  color: #087f9b;
-}
-
-.application-name span,
+.application-name,
 .account-menu {
   color: #666;
 }
