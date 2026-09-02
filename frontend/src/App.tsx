@@ -1,8 +1,29 @@
 import { useState } from 'react'
+import {
+  Navigate,
+  NavLink,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import { ApiError } from './api/index.ts'
-import { AuthenticationPage, useAuth } from './features/auth/index.ts'
+import {
+  LoginPage,
+  RegistrationPage,
+  useAuth,
+} from './features/auth/index.ts'
+import type { AuthStatus } from './features/auth/index.ts'
 import { CategoryPage } from './features/categories/index.ts'
 import { CatalogPage } from './features/catalog/index.ts'
+import {
+  appRoutes,
+  getDefaultRoute,
+  getLoginRouteState,
+  getRouteRedirect,
+} from './routing.ts'
+import type { RouteAccess } from './routing.ts'
 
 function App() {
   const { error, logout, refresh, status, user } = useAuth()
@@ -11,20 +32,75 @@ function App() {
     return <LoadingScreen />
   }
 
-  if (status === 'signedOut') {
-    return <AuthenticationPage />
-  }
-
-  if (status === 'authenticated' && user !== null) {
-    return <ApplicationShell email={user.email} onLogout={logout} />
+  if (status === 'error') {
+    return (
+      <StatusScreen
+        actionLabel="Try again"
+        message={error ?? 'The current session could not be loaded.'}
+        onAction={refresh}
+        title="Unable to start the application"
+      />
+    )
   }
 
   return (
-    <StatusScreen
-      actionLabel="Try again"
-      message={error ?? 'The current session could not be loaded.'}
-      onAction={refresh}
-      title="Unable to start the application"
+    <Routes>
+      <Route element={<RouteGuard access="public" status={status} />}>
+        <Route path={appRoutes.login} element={<LoginRoute />} />
+        <Route path={appRoutes.register} element={<RegistrationRoute />} />
+      </Route>
+      <Route element={<RouteGuard access="protected" status={status} />}>
+        <Route
+          element={<ApplicationShell email={user?.email ?? ''} onLogout={logout} />}
+        >
+          <Route path={appRoutes.products} element={<CatalogPage />} />
+          <Route path={appRoutes.categories} element={<CategoryPage />} />
+        </Route>
+      </Route>
+      <Route
+        path="*"
+        element={<Navigate to={getDefaultRoute(status)} replace />}
+      />
+    </Routes>
+  )
+}
+
+interface RouteGuardProps {
+  access: RouteAccess
+  status: AuthStatus
+}
+
+function RouteGuard({ access, status }: RouteGuardProps) {
+  const redirect = getRouteRedirect(status, access)
+  return redirect === null ? <Outlet /> : <Navigate to={redirect} replace />
+}
+
+function LoginRoute() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const routeState = getLoginRouteState(location.state)
+
+  return (
+    <LoginPage
+      initialEmail={routeState.registeredEmail}
+      notice={routeState.registeredEmail.length > 0
+        ? 'Your account has been created. You can now sign in.'
+        : null}
+      onCreateAccount={() => navigate(appRoutes.register)}
+    />
+  )
+}
+
+function RegistrationRoute() {
+  const navigate = useNavigate()
+
+  return (
+    <RegistrationPage
+      onCancel={() => navigate(appRoutes.login)}
+      onRegistered={(email) => navigate(appRoutes.login, {
+        replace: true,
+        state: { registeredEmail: email },
+      })}
     />
   )
 }
@@ -87,7 +163,6 @@ interface ApplicationShellProps {
 }
 
 function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
-  const [activeSection, setActiveSection] = useState<'products' | 'categories'>('products')
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -113,22 +188,12 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
             <span>Product Catalogue</span>
           </div>
           <nav className="app-navigation" aria-label="Main navigation">
-            <button
-              aria-current={activeSection === 'products' ? 'page' : undefined}
-              className="navigation-button"
-              onClick={() => setActiveSection('products')}
-              type="button"
-            >
+            <NavLink className="navigation-button" end to={appRoutes.products}>
               Products
-            </button>
-            <button
-              aria-current={activeSection === 'categories' ? 'page' : undefined}
-              className="navigation-button"
-              onClick={() => setActiveSection('categories')}
-              type="button"
-            >
+            </NavLink>
+            <NavLink className="navigation-button" end to={appRoutes.categories}>
               Categories
-            </button>
+            </NavLink>
           </nav>
         </div>
         <div className="account-menu">
@@ -147,7 +212,7 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
         {logoutError !== null && (
           <p className="alert alert-error" role="alert">{logoutError}</p>
         )}
-        {activeSection === 'products' ? <CatalogPage /> : <CategoryPage />}
+        <Outlet />
       </main>
     </div>
   )

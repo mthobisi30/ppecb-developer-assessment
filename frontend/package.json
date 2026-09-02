@@ -7,12 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types --test src/api/apiClient.test.ts src/features/auth/auth.test.ts src/features/categories/categoryApi.test.ts src/features/categories/categoryForm.test.ts src/features/catalog/catalogApi.test.ts src/features/catalog/catalogState.test.ts src/features/catalog/productActions.test.ts src/features/catalog/productForm.test.ts src/features/catalog/spreadsheetExchange.test.ts",
+    "test": "node --experimental-strip-types --test src/api/apiClient.test.ts src/features/auth/auth.test.ts src/features/categories/categoryApi.test.ts src/features/categories/categoryForm.test.ts src/features/catalog/catalogApi.test.ts src/features/catalog/catalogState.test.ts src/features/catalog/productActions.test.ts src/features/catalog/productForm.test.ts src/features/catalog/spreadsheetExchange.test.ts src/routing.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

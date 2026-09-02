@@ -344,12 +344,15 @@ button:disabled {
 }
 
 .navigation-button {
+  display: flex;
   min-height: 2.75rem;
   padding: 0.65rem 0.8rem;
+  align-items: center;
   border: 0;
   border-bottom: 2px solid transparent;
   color: #555;
   background: transparent;
+  text-decoration: none;
 }
 
 .navigation-button:hover {
