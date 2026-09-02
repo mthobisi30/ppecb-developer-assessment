@@ -19,9 +19,36 @@ public sealed class ProductsController(IProductService productService) : Control
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ProductPageResponse>> GetPage(
         [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery] ProductSortField sortBy = ProductSortField.Name,
+        [FromQuery] ProductSortDirection sortDirection = ProductSortDirection.Ascending,
         CancellationToken cancellationToken = default)
     {
-        var result = await productService.GetPageAsync(page, PageSize, cancellationToken);
+        if (!Enum.IsDefined(sortBy))
+        {
+            ModelState.AddModelError(nameof(sortBy), "The selected product sort field is not supported.");
+        }
+
+        if (!Enum.IsDefined(sortDirection))
+        {
+            ModelState.AddModelError(
+                nameof(sortDirection),
+                "The selected product sort direction is not supported.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ValidationProblemDetails(ModelState)
+            {
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        var result = await productService.GetPageAsync(
+            page,
+            PageSize,
+            sortBy,
+            sortDirection,
+            cancellationToken);
         return Ok(new ProductPageResponse(
             result.Items.Select(Map).ToList(),
             result.Page,

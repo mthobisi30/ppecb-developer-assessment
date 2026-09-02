@@ -1,4 +1,13 @@
 import { useEffect, useState } from 'react'
+import {
+  CircleCheck,
+  CircleOff,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  RefreshCw,
+} from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { getCategories, updateCategory } from './categoryApi.ts'
 import { CategoryForm } from './CategoryForm.tsx'
 import {
@@ -93,13 +102,12 @@ export function CategoryPage() {
           <p>Manage the categories available when adding products.</p>
         </div>
         {activeAction === null && (
-          <button
-            className="button button-primary catalog-add-button"
+          <IconButton
+            icon={<Plus size={19} strokeWidth={1.8} />}
+            label="Add category"
             onClick={() => openAction({ kind: 'create' })}
-            type="button"
-          >
-            Add category
-          </button>
+            variant="primary"
+          />
         )}
       </div>
 
@@ -111,9 +119,12 @@ export function CategoryPage() {
       {actionError !== null && (
         <div className="alert alert-error page-action-error" role="alert">
           <span>{actionError}</span>
-          <button className="text-button" onClick={retry} type="button">
-            Reload categories
-          </button>
+          <IconButton
+            icon={<RefreshCw size={17} strokeWidth={1.8} />}
+            label="Reload categories"
+            onClick={retry}
+            variant="quiet"
+          />
         </div>
       )}
 
@@ -169,9 +180,11 @@ function CategoryLoadError({ message, onRetry }: CategoryLoadErrorProps) {
     <div className="catalog-state" role="alert">
       <h2>Unable to load categories</h2>
       <p>{message}</p>
-      <button className="button button-secondary" onClick={onRetry} type="button">
-        Try again
-      </button>
+      <IconButton
+        icon={<RefreshCw size={18} strokeWidth={1.8} />}
+        label="Try again"
+        onClick={onRetry}
+      />
     </div>
   )
 }
@@ -225,26 +238,32 @@ function CategoryTable({
                 </td>
                 <td className="actions-column">
                   <div className="row-actions">
-                    <button
-                      aria-label={`Edit ${category.name}`}
+                    <IconButton
                       className="row-action-button"
                       disabled={busyCategoryId !== null}
+                      icon={<Pencil size={17} strokeWidth={1.8} />}
+                      label={`Edit ${category.name}`}
                       onClick={() => onEdit(category)}
-                      type="button"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      aria-label={`${category.isActive ? 'Deactivate' : 'Activate'} ${category.name}`}
+                      tooltip="Edit category"
+                    />
+                    <IconButton
                       className="row-action-button"
                       disabled={busyCategoryId !== null}
+                      icon={busyCategoryId === category.categoryId
+                        ? <LoaderCircle className="icon-spin" size={17} strokeWidth={1.8} />
+                        : category.isActive
+                          ? <CircleOff size={17} strokeWidth={1.8} />
+                          : <CircleCheck size={17} strokeWidth={1.8} />}
+                      label={busyCategoryId === category.categoryId
+                        ? `Updating ${category.name}`
+                        : category.isActive
+                          ? `Deactivate ${category.name}`
+                          : `Activate ${category.name}`}
                       onClick={() => onToggle(category)}
-                      type="button"
-                    >
-                      {busyCategoryId === category.categoryId
-                        ? 'Saving...'
-                        : category.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
+                      tooltip={busyCategoryId === category.categoryId
+                        ? 'Updating category'
+                        : category.isActive ? 'Deactivate category' : 'Activate category'}
+                    />
                   </div>
                 </td>
               </tr>

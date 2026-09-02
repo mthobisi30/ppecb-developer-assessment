@@ -14,6 +14,15 @@ export interface Product {
 
 export type ProductPage = PagedResponse<Product>
 
+export type ProductSortField = 'name' | 'productCode' | 'categoryName' | 'price'
+
+export type ProductSortDirection = 'ascending' | 'descending'
+
+export interface ProductSort {
+  field: ProductSortField
+  direction: ProductSortDirection
+}
+
 export interface CreateProductInput {
   name: string
   description: string | null

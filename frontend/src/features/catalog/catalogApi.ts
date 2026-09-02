@@ -4,23 +4,33 @@ import type {
   Product,
   ProductImportResult,
   ProductPage,
+  ProductSortDirection,
+  ProductSortField,
   UpdateProductInput,
 } from './catalogTypes.ts'
 
 export interface ProductPageOptions {
   page?: number
+  sortBy?: ProductSortField
+  sortDirection?: ProductSortDirection
   signal?: AbortSignal
 }
 
 export function getProductPage({
   page = 1,
+  sortBy = 'name',
+  sortDirection = 'ascending',
   signal,
 }: ProductPageOptions = {}): Promise<ProductPage> {
   if (!Number.isInteger(page) || page < 1) {
     throw new RangeError('Page must be a positive integer.')
   }
 
-  const parameters = new URLSearchParams({ page: page.toString() })
+  const parameters = new URLSearchParams({
+    page: page.toString(),
+    sortBy,
+    sortDirection,
+  })
   return apiRequest<ProductPage>(`/products?${parameters}`, { signal })
 }
 

@@ -1,5 +1,11 @@
 import { useState } from 'react'
+import {
+  LoaderCircle,
+  LogIn,
+  UserPlus,
+} from 'lucide-react'
 import type { FormEvent } from 'react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { LockIcon, UserIcon } from './AuthIcons.tsx'
 import {
   getRegistrationFailure,
@@ -151,18 +157,26 @@ export function RegistrationPage({
             Show passwords
           </label>
 
-          <button
-            className="button button-primary"
+          <IconButton
             disabled={isSubmitting}
+            icon={isSubmitting
+              ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+              : <UserPlus aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label={isSubmitting ? 'Creating account' : 'Create account'}
             type="submit"
-          >
-            {isSubmitting ? 'Creating account...' : 'Create account'}
-          </button>
+            variant="primary"
+          />
         </form>
 
         <p className="auth-switch">
           Already have an account?
-          <button className="text-button" onClick={onCancel} type="button">Sign in</button>
+          <IconButton
+            icon={<LogIn aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label="Sign in"
+            onClick={onCancel}
+            type="button"
+            variant="quiet"
+          />
         </p>
       </section>
     </main>

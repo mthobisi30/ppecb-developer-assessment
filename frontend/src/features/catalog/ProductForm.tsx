@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { LoaderCircle, Plus, RotateCw, Save, X } from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { getCategories } from '../categories/index.ts'
 import type { Category } from '../categories/index.ts'
 import { createProduct, updateProduct } from './catalogApi.ts'
@@ -120,13 +122,13 @@ export function ProductForm({ onCancel, onSaved, product }: ProductFormProps) {
         {categoryError !== null && (
           <div className="alert alert-error category-load-error" role="alert">
             <span>{categoryError}</span>
-            <button
-              className="text-button"
+            <IconButton
+              icon={<RotateCw aria-hidden="true" size={16} strokeWidth={1.8} />}
+              label="Try again"
               onClick={retryCategories}
               type="button"
-            >
-              Try again
-            </button>
+              variant="quiet"
+            />
           </div>
         )}
 
@@ -218,23 +220,26 @@ export function ProductForm({ onCancel, onSaved, product }: ProductFormProps) {
         </div>
 
         <div className="product-form-actions">
-          <button
-            className="button button-secondary"
+          <IconButton
             disabled={isSubmitting}
+            icon={<X aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label="Cancel"
             onClick={onCancel}
             type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="button button-primary"
+          />
+          <IconButton
             disabled={isSubmitting || !hasCategories}
-            type="submit"
-          >
-            {isSubmitting
-              ? isEditing ? 'Saving changes...' : 'Adding product...'
+            icon={isSubmitting
+              ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+              : isEditing
+                ? <Save aria-hidden="true" size={18} strokeWidth={1.8} />
+                : <Plus aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label={isSubmitting
+              ? isEditing ? 'Saving changes' : 'Adding product'
               : isEditing ? 'Save changes' : 'Add product'}
-          </button>
+            type="submit"
+            variant="primary"
+          />
         </div>
       </form>
     </section>

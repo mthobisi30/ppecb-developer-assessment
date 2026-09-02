@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { FileUp, LoaderCircle, X } from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { importProductsFromSpreadsheet } from './catalogApi.ts'
 import {
   getSpreadsheetImportFailure,
@@ -21,6 +23,7 @@ export function ProductSpreadsheetImport({
   const [formError, setFormError] = useState<string | null>(null)
   const [rowErrors, setRowErrors] = useState<SpreadsheetRowError[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0] ?? null
@@ -89,9 +92,16 @@ export function ProductSpreadsheetImport({
               ? 'product-spreadsheet-help'
               : 'product-spreadsheet-help product-spreadsheet-error'}
             aria-invalid={fileError !== null}
+            className="file-picker-input"
             id="product-spreadsheet"
             onChange={handleFileChange}
+            ref={fileInput}
             type="file"
+          />
+          <IconButton
+            icon={<FileUp size={18} strokeWidth={1.8} />}
+            label="Choose spreadsheet"
+            onClick={() => fileInput.current?.click()}
           />
           <span className="field-help" id="product-spreadsheet-help">
             Excel workbook (.xlsx). Maximum size 10 MB.
@@ -107,21 +117,22 @@ export function ProductSpreadsheetImport({
         {rowErrors.length > 0 && <ImportErrors errors={rowErrors} />}
 
         <div className="product-form-actions">
-          <button
-            className="button button-secondary"
+          <IconButton
             disabled={isSubmitting}
+            icon={<X aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label="Cancel"
             onClick={onCancel}
             type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="button button-primary"
+          />
+          <IconButton
             disabled={isSubmitting || file === null || fileError !== null}
+            icon={isSubmitting
+              ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+              : <FileUp aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label={isSubmitting ? 'Importing products' : 'Import products'}
             type="submit"
-          >
-            {isSubmitting ? 'Importing...' : 'Import products'}
-          </button>
+            variant="primary"
+          />
         </div>
       </form>
     </section>

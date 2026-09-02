@@ -123,6 +123,8 @@ public sealed class ProductsControllerMutationTests
         public Task<ProductPage> GetPageAsync(
             int page,
             int pageSize,
+            ProductSortField sortBy,
+            ProductSortDirection sortDirection,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new ProductPage([], page, pageSize, 0, 0));

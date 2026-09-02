@@ -5,6 +5,8 @@ public interface IProductService
     Task<ProductPage> GetPageAsync(
         int page,
         int pageSize,
+        ProductSortField sortBy,
+        ProductSortDirection sortDirection,
         CancellationToken cancellationToken = default);
 
     Task<ProductDetails?> GetByIdAsync(

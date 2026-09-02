@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { ImageUp, LoaderCircle, X } from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { uploadProductImage } from './catalogApi.ts'
 import {
   getImageUploadFailure,
@@ -24,6 +26,7 @@ export function ProductImageForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(product.imagePath)
   const objectUrl = useRef<string | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => () => {
     if (objectUrl.current !== null) {
@@ -108,9 +111,16 @@ export function ProductImageForm({
                 ? 'product-image-help'
                 : 'product-image-help product-image-error'}
               aria-invalid={fieldError !== null}
+              className="file-picker-input"
               id="product-image"
               onChange={handleFileChange}
+              ref={fileInput}
               type="file"
+            />
+            <IconButton
+              icon={<ImageUp size={18} strokeWidth={1.8} />}
+              label="Choose image"
+              onClick={() => fileInput.current?.click()}
             />
             <span className="field-help" id="product-image-help">
               JPG, PNG, WebP, GIF, or BMP. Maximum size 5 MB.
@@ -125,21 +135,22 @@ export function ProductImageForm({
         </div>
 
         <div className="product-form-actions">
-          <button
-            className="button button-secondary"
+          <IconButton
             disabled={isSubmitting}
+            icon={<X aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label="Cancel"
             onClick={onCancel}
             type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="button button-primary"
+          />
+          <IconButton
             disabled={isSubmitting || file === null || fieldError !== null}
+            icon={isSubmitting
+              ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+              : <ImageUp aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label={isSubmitting ? 'Uploading image' : 'Upload image'}
             type="submit"
-          >
-            {isSubmitting ? 'Uploading image...' : 'Upload image'}
-          </button>
+            variant="primary"
+          />
         </div>
       </form>
     </section>

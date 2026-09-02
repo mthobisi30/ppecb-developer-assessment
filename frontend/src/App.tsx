@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import {
+  LoaderCircle,
+  LogOut,
+  RefreshCw,
+} from 'lucide-react'
+import {
   Navigate,
   NavLink,
   Outlet,
@@ -9,6 +14,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import { ApiError } from './api/index.ts'
+import { IconButton } from './components/IconButton.tsx'
 import {
   LoginPage,
   RegistrationPage,
@@ -144,14 +150,16 @@ function StatusScreen({
       <div className="status-card" role="alert">
         <h1>{title}</h1>
         <p>{message}</p>
-        <button
-          className="button button-primary"
+        <IconButton
           disabled={isWorking}
+          icon={isWorking
+            ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+            : <RefreshCw aria-hidden="true" size={18} strokeWidth={1.8} />}
+          label={isWorking ? 'Trying again' : actionLabel}
           onClick={() => void handleAction()}
           type="button"
-        >
-          {isWorking ? 'Trying again...' : actionLabel}
-        </button>
+          variant="primary"
+        />
       </div>
     </main>
   )
@@ -185,24 +193,25 @@ function ApplicationShell({ email, onLogout }: ApplicationShellProps) {
         <div className="app-header-main">
           <span className="application-name">Product Catalogue</span>
           <nav className="app-navigation" aria-label="Main navigation">
-            <NavLink className="navigation-button" end to={appRoutes.products}>
-              Products
-            </NavLink>
             <NavLink className="navigation-button" end to={appRoutes.categories}>
               Categories
+            </NavLink>
+            <NavLink className="navigation-button" end to={appRoutes.products}>
+              Products
             </NavLink>
           </nav>
         </div>
         <div className="account-menu">
           <span>{email}</span>
-          <button
-            className="button button-secondary"
+          <IconButton
             disabled={isLoggingOut}
+            icon={isLoggingOut
+              ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+              : <LogOut aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label={isLoggingOut ? 'Signing out' : 'Sign out'}
             onClick={() => void handleLogout()}
             type="button"
-          >
-            {isLoggingOut ? 'Signing out...' : 'Sign out'}
-          </button>
+          />
         </div>
       </header>
       <main className="app-content">

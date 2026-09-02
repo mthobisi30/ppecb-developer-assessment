@@ -42,9 +42,16 @@ test('getProductPage requests and returns the selected page', async () => {
     totalPages: 2,
   }))
 
-  const result = await getProductPage({ page: 2 })
+  const result = await getProductPage({
+    page: 2,
+    sortBy: 'price',
+    sortDirection: 'descending',
+  })
 
-  assert.equal(calls[0].input, '/api/products?page=2')
+  assert.equal(
+    calls[0].input,
+    '/api/products?page=2&sortBy=price&sortDirection=descending',
+  )
   assert.equal(calls[0].init.method, 'GET')
   assert.equal(result.items[0].productCode, 'PROD-202609-001')
   assert.equal(result.items[0].price, 29.95)
@@ -64,7 +71,10 @@ test('getProductPage defaults to the first page and forwards cancellation', asyn
 
   await getProductPage({ signal: controller.signal })
 
-  assert.equal(calls[0].input, '/api/products?page=1')
+  assert.equal(
+    calls[0].input,
+    '/api/products?page=1&sortBy=name&sortDirection=ascending',
+  )
   assert.equal(calls[0].init.signal, controller.signal)
 })
 

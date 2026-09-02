@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { LoaderCircle, Plus, Save, X } from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { createCategory, updateCategory } from './categoryApi.ts'
 import {
   getCategoryFormFailure,
@@ -154,23 +156,25 @@ export function CategoryForm({
         </label>
 
         <div className="product-form-actions">
-          <button
-            className="button button-secondary"
+          <IconButton
             disabled={isSubmitting}
+            icon={<X size={18} strokeWidth={1.8} />}
+            label="Cancel"
             onClick={onCancel}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="button button-primary"
+          />
+          <IconButton
             disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting
-              ? isEditing ? 'Saving changes...' : 'Adding category...'
+            icon={isSubmitting
+              ? <LoaderCircle className="icon-spin" size={18} strokeWidth={1.8} />
+              : isEditing
+                ? <Save size={18} strokeWidth={1.8} />
+                : <Plus size={19} strokeWidth={1.8} />}
+            label={isSubmitting
+              ? isEditing ? 'Saving changes' : 'Adding category'
               : isEditing ? 'Save changes' : 'Add category'}
-          </button>
+            type="submit"
+            variant="primary"
+          />
         </div>
       </form>
     </section>

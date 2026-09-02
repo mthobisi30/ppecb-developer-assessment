@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { LoaderCircle, Trash2, X } from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
 import { deleteProduct } from './catalogApi.ts'
 import { getProductActionError } from './productActions.ts'
 import type { Product } from './catalogTypes.ts'
@@ -49,22 +51,23 @@ export function DeleteProductConfirmation({
       <p>Delete <strong>{product.name}</strong> from the catalogue?</p>
 
       <div className="product-form-actions">
-        <button
-          className="button button-secondary"
+        <IconButton
           disabled={isDeleting}
+          icon={<X aria-hidden="true" size={18} strokeWidth={1.8} />}
+          label="Cancel"
           onClick={onCancel}
           type="button"
-        >
-          Cancel
-        </button>
-        <button
-          className="button button-danger"
+        />
+        <IconButton
           disabled={isDeleting}
+          icon={isDeleting
+            ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+            : <Trash2 aria-hidden="true" size={18} strokeWidth={1.8} />}
+          label={isDeleting ? 'Deleting product' : 'Delete product'}
           onClick={() => void handleDelete()}
           type="button"
-        >
-          {isDeleting ? 'Deleting product...' : 'Delete product'}
-        </button>
+          variant="danger"
+        />
       </div>
     </section>
   )

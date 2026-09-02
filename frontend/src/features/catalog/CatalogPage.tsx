@@ -1,5 +1,21 @@
 import { useEffect, useReducer, useState } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  FileDown,
+  FileUp,
+  ImageUp,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  RotateCw,
+  Trash2,
+} from 'lucide-react'
+import { IconButton } from '../../components/IconButton.tsx'
+import {
   exportProductsToSpreadsheet,
   getProductPage,
 } from './catalogApi.ts'
@@ -16,7 +32,12 @@ import {
   initialCatalogState,
 } from './catalogState.ts'
 import { getSpreadsheetExportError } from './spreadsheetExchange.ts'
-import type { Product, ProductPage } from './catalogTypes.ts'
+import type {
+  Product,
+  ProductPage,
+  ProductSort,
+  ProductSortField,
+} from './catalogTypes.ts'
 
 type ProductAction =
   | { kind: 'create' }
@@ -32,33 +53,51 @@ export function CatalogPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const { page, sort } = state
 
   useEffect(() => {
     const controller = new AbortController()
 
-    void getProductPage({ page: state.page, signal: controller.signal })
+    void getProductPage({
+      page,
+      sortBy: sort.field,
+      sortDirection: sort.direction,
+      signal: controller.signal,
+    })
       .then((data) => {
-        dispatch({ type: 'pageLoaded', page: state.page, data })
+        dispatch({ type: 'pageLoaded', page, sort, data })
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
           dispatch({
             type: 'pageFailed',
-            page: state.page,
+            page,
+            sort,
             message: getCatalogErrorMessage(error),
           })
         }
       })
 
     return () => controller.abort()
-  }, [state.page, requestVersion])
+  }, [page, requestVersion, sort])
 
   function selectPage(page: number) {
     dispatch({ type: 'pageRequested', page })
   }
 
+  function selectSort(field: ProductSortField) {
+    const direction = sort.field === field && sort.direction === 'ascending'
+      ? 'descending'
+      : 'ascending'
+
+    dispatch({
+      type: 'sortRequested',
+      sort: { field, direction },
+    })
+  }
+
   function retry() {
-    dispatch({ type: 'pageRequested', page: state.page })
+    dispatch({ type: 'pageRequested', page })
     setRequestVersion((version) => version + 1)
   }
 
@@ -81,16 +120,16 @@ export function CatalogPage() {
   }
 
   function handleProductUpdated(product: Product) {
-    finishAction(state.page, `${product.name} was updated.`)
+    finishAction(page, `${product.name} was updated.`)
   }
 
   function handleImageUploaded(product: Product) {
-    finishAction(state.page, `The image for ${product.name} was updated.`)
+    finishAction(page, `The image for ${product.name} was updated.`)
   }
 
   function handleProductDeleted(product: Product) {
     const targetPage = getPageAfterProductDelete(
-      state.page,
+      page,
       state.data?.items.length ?? 0,
     )
     finishAction(targetPage, `${product.name} was deleted.`)
@@ -125,30 +164,30 @@ export function CatalogPage() {
         </div>
         {activeAction === null && (
           <div className="catalog-actions">
-            <button
-              className="button button-secondary"
+            <IconButton
               disabled={isExporting}
+              icon={<FileUp aria-hidden="true" size={18} strokeWidth={1.8} />}
+              label="Import products"
               onClick={() => openAction({ kind: 'import' })}
               type="button"
-            >
-              Import
-            </button>
-            <button
-              className="button button-secondary"
+            />
+            <IconButton
               disabled={isExporting}
+              icon={isExporting
+                ? <LoaderCircle aria-hidden="true" className="icon-spin" size={18} strokeWidth={1.8} />
+                : <FileDown aria-hidden="true" size={18} strokeWidth={1.8} />}
+              label={isExporting ? 'Exporting products' : 'Export products'}
               onClick={() => void handleExport()}
               type="button"
-            >
-              {isExporting ? 'Exporting...' : 'Export'}
-            </button>
-            <button
-              className="button button-primary"
+            />
+            <IconButton
               disabled={isExporting}
+              icon={<Plus aria-hidden="true" size={19} strokeWidth={1.8} />}
+              label="Add product"
               onClick={() => openAction({ kind: 'create' })}
               type="button"
-            >
-              Add product
-            </button>
+              variant="primary"
+            />
           </div>
         )}
       </div>
@@ -211,6 +250,8 @@ export function CatalogPage() {
                 onEdit={(product) => openAction({ kind: 'edit', product })}
                 onImage={(product) => openAction({ kind: 'image', product })}
                 onPageChange={selectPage}
+                onSortChange={selectSort}
+                sort={sort}
               />
             )
       )}
@@ -248,9 +289,12 @@ function CatalogError({ message, onRetry }: CatalogErrorProps) {
     <div className="catalog-state" role="alert">
       <h2>Unable to load products</h2>
       <p>{message}</p>
-      <button className="button button-secondary" onClick={onRetry} type="button">
-        Try again
-      </button>
+      <IconButton
+        icon={<RotateCw aria-hidden="true" size={18} strokeWidth={1.8} />}
+        label="Try again"
+        onClick={onRetry}
+        type="button"
+      />
     </div>
   )
 }
@@ -270,6 +314,8 @@ interface CatalogResultsProps {
   onEdit: (product: Product) => void
   onImage: (product: Product) => void
   onPageChange: (page: number) => void
+  onSortChange: (field: ProductSortField) => void
+  sort: ProductSort
 }
 
 function CatalogResults({
@@ -278,6 +324,8 @@ function CatalogResults({
   onEdit,
   onImage,
   onPageChange,
+  onSortChange,
+  sort,
 }: CatalogResultsProps) {
   return (
     <div className="catalog-results">
@@ -286,10 +334,31 @@ function CatalogResults({
           <caption>Products in the catalogue</caption>
           <thead>
             <tr>
-              <th scope="col">Product</th>
-              <th scope="col">Code</th>
-              <th scope="col">Category</th>
-              <th className="price-column" scope="col">Price</th>
+              <SortableColumnHeader
+                field="name"
+                label="Product"
+                onSortChange={onSortChange}
+                sort={sort}
+              />
+              <SortableColumnHeader
+                field="productCode"
+                label="Code"
+                onSortChange={onSortChange}
+                sort={sort}
+              />
+              <SortableColumnHeader
+                field="categoryName"
+                label="Category"
+                onSortChange={onSortChange}
+                sort={sort}
+              />
+              <SortableColumnHeader
+                className="price-column"
+                field="price"
+                label="Price"
+                onSortChange={onSortChange}
+                sort={sort}
+              />
               <th className="actions-column" scope="col">Actions</th>
             </tr>
           </thead>
@@ -309,26 +378,73 @@ function CatalogResults({
       <nav className="catalog-pagination" aria-label="Product catalogue pages">
         <span>{getProductRangeLabel(data)}</span>
         <div className="pagination-actions">
-          <button
+          <IconButton
             className="pagination-button"
             disabled={data.page <= 1}
+            icon={<ChevronLeft aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label="Previous page"
             onClick={() => onPageChange(data.page - 1)}
             type="button"
-          >
-            Previous
-          </button>
+          />
           <span>Page {data.page} of {data.totalPages}</span>
-          <button
+          <IconButton
             className="pagination-button"
             disabled={data.page >= data.totalPages}
+            icon={<ChevronRight aria-hidden="true" size={18} strokeWidth={1.8} />}
+            label="Next page"
             onClick={() => onPageChange(data.page + 1)}
             type="button"
-          >
-            Next
-          </button>
+          />
         </div>
       </nav>
     </div>
+  )
+}
+
+interface SortableColumnHeaderProps {
+  className?: string
+  field: ProductSortField
+  label: string
+  onSortChange: (field: ProductSortField) => void
+  sort: ProductSort
+}
+
+function SortableColumnHeader({
+  className,
+  field,
+  label,
+  onSortChange,
+  sort,
+}: SortableColumnHeaderProps) {
+  const isActive = sort.field === field
+  const direction = isActive ? sort.direction : 'ascending'
+  const nextDirection = direction === 'ascending' ? 'descending' : 'ascending'
+  const sortIcon = isActive
+    ? direction === 'ascending'
+      ? <ArrowUp aria-hidden="true" size={15} strokeWidth={1.8} />
+      : <ArrowDown aria-hidden="true" size={15} strokeWidth={1.8} />
+    : <ArrowUpDown aria-hidden="true" size={15} strokeWidth={1.8} />
+  const sortLabel = isActive
+    ? `${label}, sorted ${direction}. Sort ${nextDirection}.`
+    : `Sort by ${label} ascending.`
+
+  return (
+    <th
+      aria-sort={isActive ? direction : undefined}
+      className={className}
+      scope="col"
+    >
+      <span>{label}</span>
+      <IconButton
+        className="sort-icon-button"
+        icon={sortIcon}
+        label={sortLabel}
+        onClick={() => onSortChange(field)}
+        tooltip={`Sort ${label} ${nextDirection}`}
+        type="button"
+        variant="quiet"
+      />
+    </th>
   )
 }
 
@@ -358,30 +474,33 @@ function ProductRow({
       <td className="price-column">{formatProductPrice(product.price)}</td>
       <td className="actions-column">
         <div className="row-actions">
-          <button
-            aria-label={`Edit ${product.name}`}
+          <IconButton
             className="row-action-button"
+            icon={<Pencil aria-hidden="true" size={17} strokeWidth={1.8} />}
+            label={`Edit ${product.name}`}
             onClick={() => onEdit(product)}
+            tooltip="Edit product"
             type="button"
-          >
-            Edit
-          </button>
-          <button
-            aria-label={`Change image for ${product.name}`}
+            variant="quiet"
+          />
+          <IconButton
             className="row-action-button"
+            icon={<ImageUp aria-hidden="true" size={17} strokeWidth={1.8} />}
+            label={`Change image for ${product.name}`}
             onClick={() => onImage(product)}
+            tooltip="Change product image"
             type="button"
-          >
-            Image
-          </button>
-          <button
-            aria-label={`Delete ${product.name}`}
+            variant="quiet"
+          />
+          <IconButton
             className="row-action-button row-action-danger"
+            icon={<Trash2 aria-hidden="true" size={17} strokeWidth={1.8} />}
+            label={`Delete ${product.name}`}
             onClick={() => onDelete(product)}
+            tooltip="Delete product"
             type="button"
-          >
-            Delete
-          </button>
+            variant="quiet"
+          />
         </div>
       </td>
     </tr>

@@ -15,7 +15,9 @@ public sealed class ProductsControllerQueryTests
         var page = new ProductPage([product], 2, 10, 11, 2);
         var controller = new ProductsController(new StubProductService(page, product));
 
-        var response = await controller.GetPage(2, CancellationToken.None);
+        var response = await controller.GetPage(
+            page: 2,
+            cancellationToken: CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(response.Result);
         var body = Assert.IsType<ProductPageResponse>(okResult.Value);
@@ -24,6 +26,43 @@ public sealed class ProductsControllerQueryTests
         Assert.Equal(10, body.PageSize);
         Assert.Equal(11, body.TotalCount);
         Assert.Equal(2, body.TotalPages);
+    }
+
+    [Fact]
+    public async Task GetPage_SortSelected_ForwardsSortCriteria()
+    {
+        var product = CreateDetails();
+        var page = new ProductPage([product], 1, 10, 1, 1);
+        var service = new StubProductService(page, product);
+        var controller = new ProductsController(service);
+
+        await controller.GetPage(
+            page: 1,
+            sortBy: ProductSortField.Price,
+            sortDirection: ProductSortDirection.Descending,
+            cancellationToken: CancellationToken.None);
+
+        Assert.Equal(ProductSortField.Price, service.SortBy);
+        Assert.Equal(ProductSortDirection.Descending, service.SortDirection);
+    }
+
+    [Fact]
+    public async Task GetPage_UnsupportedSortCriteria_ReturnsValidationProblem()
+    {
+        var page = new ProductPage([], 1, 10, 0, 0);
+        var controller = new ProductsController(new StubProductService(page, null));
+
+        var response = await controller.GetPage(
+            page: 1,
+            sortBy: (ProductSortField)99,
+            sortDirection: (ProductSortDirection)99,
+            cancellationToken: CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(response.Result);
+        var problem = Assert.IsType<ValidationProblemDetails>(badRequest.Value);
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.Status);
+        Assert.Contains("sortBy", problem.Errors.Keys);
+        Assert.Contains("sortDirection", problem.Errors.Keys);
     }
 
     [Fact]
@@ -57,11 +96,19 @@ public sealed class ProductsControllerQueryTests
         ProductPage page,
         ProductDetails? product) : IProductService
     {
+        public ProductSortField? SortBy { get; private set; }
+
+        public ProductSortDirection? SortDirection { get; private set; }
+
         public Task<ProductPage> GetPageAsync(
             int pageNumber,
             int pageSize,
+            ProductSortField sortBy,
+            ProductSortDirection sortDirection,
             CancellationToken cancellationToken = default)
         {
+            SortBy = sortBy;
+            SortDirection = sortDirection;
             return Task.FromResult(page);
         }
 

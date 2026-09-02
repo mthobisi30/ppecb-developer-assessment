@@ -37,11 +37,13 @@ test('catalogReducer transitions through loading, success, and failure states', 
   const ready = catalogReducer(loading, {
     type: 'pageLoaded',
     page: 2,
+    sort: initialCatalogState.sort,
     data: productPage,
   })
   const failed = catalogReducer(loading, {
     type: 'pageFailed',
     page: 2,
+    sort: initialCatalogState.sort,
     message: 'Service unavailable.',
   })
 
@@ -49,18 +51,21 @@ test('catalogReducer transitions through loading, success, and failure states', 
     data: null,
     error: null,
     page: 2,
+    sort: initialCatalogState.sort,
     status: 'loading',
   })
   assert.deepEqual(ready, {
     data: productPage,
     error: null,
     page: 2,
+    sort: initialCatalogState.sort,
     status: 'ready',
   })
   assert.deepEqual(failed, {
     data: null,
     error: 'Service unavailable.',
     page: 2,
+    sort: initialCatalogState.sort,
     status: 'error',
   })
 })
@@ -74,10 +79,58 @@ test('catalogReducer ignores a response for a page that is no longer selected', 
   const result = catalogReducer(loading, {
     type: 'pageLoaded',
     page: 1,
+    sort: initialCatalogState.sort,
     data: { ...productPage, page: 1 },
   })
 
   assert.equal(result, loading)
+})
+
+test('catalogReducer resets to the first page when the sort changes', () => {
+  const current = {
+    ...initialCatalogState,
+    data: productPage,
+    page: 2,
+    status: 'ready' as const,
+  }
+
+  const result = catalogReducer(current, {
+    type: 'sortRequested',
+    sort: {
+      field: 'price',
+      direction: 'descending',
+    },
+  })
+
+  assert.deepEqual(result, {
+    data: null,
+    error: null,
+    page: 1,
+    sort: {
+      field: 'price',
+      direction: 'descending',
+    },
+    status: 'loading',
+  })
+})
+
+test('catalogReducer ignores a stale response for a previous sort', () => {
+  const current = catalogReducer(initialCatalogState, {
+    type: 'sortRequested',
+    sort: {
+      field: 'price',
+      direction: 'ascending',
+    },
+  })
+
+  const result = catalogReducer(current, {
+    type: 'pageLoaded',
+    page: 1,
+    sort: initialCatalogState.sort,
+    data: { ...productPage, page: 1 },
+  })
+
+  assert.equal(result, current)
 })
 
 test('getCatalogErrorMessage presents API and network failures safely', () => {

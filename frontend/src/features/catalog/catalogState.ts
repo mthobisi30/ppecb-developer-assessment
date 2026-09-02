@@ -1,22 +1,28 @@
 import { ApiError } from '../../api/index.ts'
-import type { ProductPage } from './catalogTypes.ts'
+import type { ProductPage, ProductSort } from './catalogTypes.ts'
 
 export interface CatalogState {
   data: ProductPage | null
   error: string | null
   page: number
+  sort: ProductSort
   status: 'loading' | 'ready' | 'error'
 }
 
 export type CatalogAction =
   | { type: 'pageRequested'; page: number }
-  | { type: 'pageLoaded'; page: number; data: ProductPage }
-  | { type: 'pageFailed'; page: number; message: string }
+  | { type: 'sortRequested'; sort: ProductSort }
+  | { type: 'pageLoaded'; page: number; sort: ProductSort; data: ProductPage }
+  | { type: 'pageFailed'; page: number; sort: ProductSort; message: string }
 
 export const initialCatalogState: CatalogState = {
   data: null,
   error: null,
   page: 1,
+  sort: {
+    field: 'name',
+    direction: 'ascending',
+  },
   status: 'loading',
 }
 
@@ -24,7 +30,10 @@ export function catalogReducer(
   state: CatalogState,
   action: CatalogAction,
 ): CatalogState {
-  if (action.type !== 'pageRequested' && action.page !== state.page) {
+  if (
+    (action.type === 'pageLoaded' || action.type === 'pageFailed')
+    && (action.page !== state.page || !isSameSort(action.sort, state.sort))
+  ) {
     return state
   }
 
@@ -34,6 +43,15 @@ export function catalogReducer(
         data: null,
         error: null,
         page: action.page,
+        sort: state.sort,
+        status: 'loading',
+      }
+    case 'sortRequested':
+      return {
+        data: null,
+        error: null,
+        page: 1,
+        sort: action.sort,
         status: 'loading',
       }
     case 'pageLoaded':
@@ -41,6 +59,7 @@ export function catalogReducer(
         data: action.data,
         error: null,
         page: action.page,
+        sort: action.sort,
         status: 'ready',
       }
     case 'pageFailed':
@@ -48,9 +67,14 @@ export function catalogReducer(
         data: null,
         error: action.message,
         page: action.page,
+        sort: action.sort,
         status: 'error',
       }
   }
+}
+
+function isSameSort(left: ProductSort, right: ProductSort): boolean {
+  return left.field === right.field && left.direction === right.direction
 }
 
 export function getCatalogErrorMessage(error: unknown): string {

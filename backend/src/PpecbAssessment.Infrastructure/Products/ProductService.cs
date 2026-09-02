@@ -16,6 +16,8 @@ public sealed class ProductService(
     public async Task<ProductPage> GetPageAsync(
         int page,
         int pageSize,
+        ProductSortField sortBy,
+        ProductSortDirection sortDirection,
         CancellationToken cancellationToken = default)
     {
         var ownerUserId = GetOwnerUserId();
@@ -23,9 +25,7 @@ public sealed class ProductService(
             .AsNoTracking()
             .Where(product => product.Category.OwnerUserId == ownerUserId);
         var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderBy(product => product.Name)
-            .ThenBy(product => product.ProductId)
+        var items = await ApplySort(query, sortBy, sortDirection)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(product => new ProductDetails(
@@ -46,6 +46,40 @@ public sealed class ProductService(
             pageSize,
             totalCount,
             (int)Math.Ceiling(totalCount / (double)pageSize));
+    }
+
+    private static IOrderedQueryable<Product> ApplySort(
+        IQueryable<Product> query,
+        ProductSortField sortBy,
+        ProductSortDirection sortDirection)
+    {
+        return (sortBy, sortDirection) switch
+        {
+            (ProductSortField.Name, ProductSortDirection.Descending) => query
+                .OrderByDescending(product => product.Name)
+                .ThenBy(product => product.ProductId),
+            (ProductSortField.ProductCode, ProductSortDirection.Ascending) => query
+                .OrderBy(product => product.ProductCode)
+                .ThenBy(product => product.ProductId),
+            (ProductSortField.ProductCode, ProductSortDirection.Descending) => query
+                .OrderByDescending(product => product.ProductCode)
+                .ThenBy(product => product.ProductId),
+            (ProductSortField.CategoryName, ProductSortDirection.Ascending) => query
+                .OrderBy(product => product.Category.Name)
+                .ThenBy(product => product.ProductId),
+            (ProductSortField.CategoryName, ProductSortDirection.Descending) => query
+                .OrderByDescending(product => product.Category.Name)
+                .ThenBy(product => product.ProductId),
+            (ProductSortField.Price, ProductSortDirection.Ascending) => query
+                .OrderBy(product => product.Price)
+                .ThenBy(product => product.ProductId),
+            (ProductSortField.Price, ProductSortDirection.Descending) => query
+                .OrderByDescending(product => product.Price)
+                .ThenBy(product => product.ProductId),
+            _ => query
+                .OrderBy(product => product.Name)
+                .ThenBy(product => product.ProductId)
+        };
     }
 
     public Task<ProductDetails?> GetByIdAsync(
