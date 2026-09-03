@@ -34,6 +34,12 @@ Api ───────────────► Application
 
 The test project is outside the production dependency chain.
 
+## Technical documentation
+
+- [Architecture and UML component diagram](docs/ARCHITECTURE.md)
+- [Data model and entity relationship diagram](docs/DATA_MODEL.md)
+- [Assumptions and design decisions](docs/ASSUMPTIONS.md)
+
 ## Repository structure
 
 ```text
