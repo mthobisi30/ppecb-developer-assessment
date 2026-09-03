@@ -164,6 +164,16 @@ npm run lint
 npm run build
 ```
 
+## Sample product import template
+
+Use the [sample import template](docs/product-import-template.xlsx) to prepare a product import. Its `Products` sheet contains the required columns:
+
+```text
+Name | Description | CategoryCode | Price
+```
+
+Create the matching active categories before importing, or replace the sample category codes with codes from your own active categories.
+
 ## Database persistence
 
 SQL Server stores its database files in the named Docker volume `ppecb-assessment_sqlserver-data`. Stopping or recreating the container does not remove the stored data.
